@@ -1,0 +1,3 @@
+username=Tushar
+volume=80
+dark_mode=1
