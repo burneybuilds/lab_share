@@ -1,91 +1,99 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
+#include "host.h"
+#include "client.h"
 
 int cli_interface(){
 
     int user_input = 0;
     
     printf("===================Lab Share====================\n");
-    printf("1. Connect Code.\n");
-    printf("2. Generate Code.\n");
+    printf("1. Generate Code.\n");
+    printf("2. Connect Code.\n");
     printf("3. Settings.\n");
     printf("4. Exit.\n");
     printf("=================================================\n");
     
     printf("<Input>");
     scanf("%d", &user_input);
-
     
     return user_input;
 }
 
 // This fucntion is where file handling of setting is done. 
-void settings(){
+int settings(){
     FILE *fp;
-    char username[50];
-    int volume;
-    int dark_mode;
+    char user_name[50];
+    int port;
+    float connection_timeout;
+    int max_connections;
 
     // Opens the file in "w" == write Mode.
     fp = fopen("settings.text", "r");
 
     // checks if the file is not there and return 1 exit code == Error.
     if (fp == NULL) {
-        // printf("Error opening file!");
-        
-    }
+        printf("Error opening file!");
+        return 1;
+    }   
     
-    if (fscanf(fp, "username=%49[^\n]\n", username) != 1 ||
-        fscanf(fp, "volume=%d\n", &volume) != 1 ||
-        fscanf(fp, "dark_mode=%d", &dark_mode) != 1) {
-        //printf("Invalid settings file.\n");
-        fclose(fp);
-    }
+    // if (fscanf(fp, "username=%49[^\n]\n", user_name) != 1 ||
+    //     fscanf(fp, "volume=%d\n", &port) != 1 ||
+    //     fscanf(fp, "dark_mode=%d", &connection_timeout) != 1) {
+    //     printf("Invalid settings file.\n");
+    //     fclose(fp);
+    // }
 
     // Use the loaded settings
     printf("===================Settings======================\n");
-    printf("Username: %s\n", username);
-    printf("Volume: %d\n", volume);
-    printf("Dark mode: %s\n", dark_mode ? "ON" : "OFF");
+    printf("Username: %s\n", user_name);
+    printf("Port No: %d\n", port);
+    printf("Connection Timeout: %s\n", connection_timeout ? "ON" : "OFF");
+    printf("Connection Timeout: %s\n", max_connections );
     printf("=================================================\n");
     
     fclose(fp);
-}
-
-int join_room(){
-    
-}
-
-int create_room(){
     return 0;
 }
 
-int create_connect(){
+int client(){
     return 0;
 }
+
+int host(){
+    main_controller();
+}
+
 int main(void){
 
-    int user_input = cli_interface();
+    int user_input = 0 ;
     
     while (user_input  != 4){
+        user_input = cli_interface();
+        
         switch(user_input){
             case 1:
-
+                system("cls"); 
+                host();
+                break;
             case 2:
-                
+                system("cls"); 
+                client();
+                break;
             case 3:
                 system("clear");
-                settings();
+                int flag = settings();
                 break;
             case 4:
                 printf("Have a great day.");
                 return 0;
-            // default:
-            //     printf("Invalid Input. ");
-            //     system("cls");    
-            //     break;
+            default:
+                printf("Invalid Input. ");
+                system("cls");    
+                break;
         }
     }
 

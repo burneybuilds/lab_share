@@ -1,3 +1,4 @@
 username=Tushar
-volume=80
-dark_mode=1
+port=80
+connection_timeout=5.0
+max_connections=1
