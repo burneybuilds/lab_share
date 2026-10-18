@@ -24,40 +24,40 @@ int cli_interface(){
 }
 
 // This fucntion is where file handling of setting is done. 
-int settings(){
-    FILE *fp;
-    char user_name[50];
-    int port;
-    float connection_timeout;
-    int max_connections;
+// void settings(){
+//     FILE *fp;
+//     char user_name[50];
+//     int port;
+//     float connection_timeout;
+//     int max_connections;
 
-    // Opens the file in "w" == write Mode.
-    fp = fopen("settings.text", "r");
+//     // Opens the file in "w" == write Mode.
+//     fp = fopen("settings.text", "r");
 
-    // checks if the file is not there and return 1 exit code == Error.
-    if (fp == NULL) {
-        printf("Error opening file!");
-        return 1;
-    }   
+//     // checks if the file is not there and return 1 exit code == Error.
+//     if (fp == NULL) {
+//         printf("Error opening file!");
+//         // return 1;
+//     }   
     
-    // if (fscanf(fp, "username=%49[^\n]\n", user_name) != 1 ||
-    //     fscanf(fp, "volume=%d\n", &port) != 1 ||
-    //     fscanf(fp, "dark_mode=%d", &connection_timeout) != 1) {
-    //     printf("Invalid settings file.\n");
-    //     fclose(fp);
-    // }
+//     // if (fscanf(fp, "username=%49[^\n]\n", user_name) != 1 ||
+//     //     fscanf(fp, "volume=%d\n", &port) != 1 ||
+//     //     fscanf(fp, "dark_mode=%d", &connection_timeout) != 1) {
+//     //     printf("Invalid settings file.\n");
+//     //     fclose(fp);
+//     // }
 
-    // Use the loaded settings
-    printf("===================Settings======================\n");
-    printf("Username: %s\n", user_name);
-    printf("Port No: %d\n", port);
-    printf("Connection Timeout: %s\n", connection_timeout ? "ON" : "OFF");
-    printf("Connection Timeout: %s\n", max_connections );
-    printf("=================================================\n");
+//     // Use the loaded settings
+//     printf("===================Settings======================\n");
+//     printf("Username: %s\n", user_name);
+//     printf("Port No: %d\n", port);
+//     printf("Connection Timeout: %s\n", connection_timeout ? "ON" : "OFF");
+//     printf("Connection Timeout: %s\n", max_connections );
+//     printf("=================================================\n");
     
-    fclose(fp);
-    return 0;
-}
+//     fclose(fp);
+//     // return 0;
+// }
 
 int client(){
     return 0;
@@ -85,7 +85,7 @@ int main(void){
                 break;
             case 3:
                 system("clear");
-                int flag = settings();
+                //settings();
                 break;
             case 4:
                 printf("Have a great day.");

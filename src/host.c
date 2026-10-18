@@ -111,12 +111,13 @@ void main_controller(void){
         }
         else if (user_input == 2)
         {
-            printf("Receive File selected.\n");
+            printf("Waiting for the file......\n");
             // Next step: implement file receiving.
         }
         else if (user_input != 3)
         {
             printf("Invalid option. Please choose 1, 2, or 3.\n");
+            system("Clear");
         }
 
     } while (user_input != 3);
