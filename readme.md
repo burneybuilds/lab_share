@@ -1,145 +1,74 @@
 # Lab Share
 
-**A peer-to-peer file-sharing application built in C.**
+As a college student, I’ve often needed to transfer files between computers in college labs. I started wondering: why do we need to rely on apps like WhatsApp or Gmail just to send a file to someone sitting on the same local network? I wanted to build something simple that lets users transfer files directly between computers without needing accounts or uploading files to third-party services. That’s where the idea for Lab Share came from.
 
-Lab Share is a project focused on making file sharing between computers simple and efficient. The goal is to allow users to host sharing rooms, connect to other devices on a local network, and transfer files directly between peers.
+Lab Share is a peer-to-peer file-sharing application written in C with a command-line interface (CLI). The main goal is to make file transfers between computers on the same local area network (LAN), such as those in college computer labs, simple and convenient.
 
-The project is being developed using C and Winsock on Windows, with a focus on understanding network programming, TCP/IP communication, and file handling.
+In the future, I also want to explore QR code-based sharing, allowing users to scan a code and download files directly to their devices through a browser. For now, though, I’m focusing on building the basic LAN file-transfer functionality.
 
-## Features
+Note :- Lab Share is a learning project built with the help of AI for guidance and debugging. Most of the code is written by me, and I’m focused on understanding how it works rather than blindly copying it. My goal is to learn C and networking by building something practical.
 
-### Planned Features
-
-- **Host a Room:** Start a server that listens for incoming connections.
-- **Join a Room:** Connect to an existing host.
-- **File Transfer:** Send files between connected devices using TCP.
-- **Room Discovery:** Discover available rooms on the local network using UDP broadcast.
-- **Room Keys:** Use a room key to control access to a sharing room.
-- **Large File Support:** Transfer files in chunks without loading the entire file into memory.
-- **Terminal Interface:** Provide a simple terminal-based user interface.
-- **QR Code Sharing:** Generate a QR code that allows a phone to download a shared file through a browser.
-- **Cross-Network Sharing:** Explore ways to share files between devices on different networks.
-
-> **Note:** Lab Share is under development. Planned features may not be implemented yet.
-
-## Technology Stack
-
-- **Language:** C
-- **Compiler:** GCC (MinGW-w64)
-- **Networking:** Winsock2
-- **Protocols:**
-  - TCP for reliable file transfers.
-  - UDP for local network discovery.
-  - HTTP for the planned browser-based download feature.
-- **Platform:** Windows (initial development target)
-
-## Project Structure
-
-The project is being organized into separate source files for the application's entry point, hosting functionality, and client functionality.
-
-```text
-LabShare/
-├── main.c       # Application entry point
-├── host.c       # Server and hosting functionality
-├── client.c     # Client and connection functionality
-└── README.md    # Project documentation
-```
-
-The structure may evolve as the project grows.
 
 ## Getting Started
 
-### Prerequisites
-
-To build the project, you need:
-
-- Windows
-- GCC with MinGW-w64
-- Winsock2 development headers and libraries
-
-### Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd LabShare
 ```
 
-Replace `<repository-url>` with the repository's actual URL.
-
-### Compile the Host
+### 2. Build the Executable
 
 ```bash
-gcc -Wall -Wextra -Wpedantic -g main.c host.c -o host.exe -lws2_32
+make
 ```
 
-### Compile the Client
+### 3. Run Lab Share
 
 ```bash
-gcc -Wall -Wextra -Wpedantic -g main.c client.c -o client.exe -lws2_32
+./build/main.exe
 ```
 
-These commands assume that `main.c` is compatible with both builds and that each build contains exactly one `main()` function.
+**Prerequisites:** Windows, GCC (MinGW-w64), and GNU Make.
 
-### Run the Application
+For detailed installation and setup instructions, see the [Setup Guide](docs/setup.md).
 
-In the terminal, run:
 
-```bash
-./host.exe
+## Project Structure
+
+```text
+LabShare/
+├── include/             # Header files containing function declarations
+│   ├── client.h         
+│   ├── host.h           
+│   └── transfer.h       
+├── src/
+│   ├── main.c           # Entry point; starts the CLI and handles the main menu
+│   ├── client.c         # Handles connecting to a host
+│   ├── host.c           # Handles hosting and accepting connections
+│   └── transfer.c       # Handles file transfer operations
+├── build/
+│   └── main.exe         # Compiled application executable
+├── makefile             # Build instructions
+├── settings.text        # Application configuration settings
+└── README.md            # Project documentation
 ```
 
-Or run the client:
+## Technology Stack
 
-```bash
-./client.exe
-```
+- **Language:** C
+- **Compiler:** GCC (MinGW-w64)
+- **Networking:** Winsock2 (Windows socket API)
+- **Protocols:**
+  - TCP — Reliable file transfers
+  - UDP — Local network room discovery (planned)
+  - HTTP — Browser-based file downloads via QR codes (planned)
+- **Build System:** GNU Make
+- **Current Platform:** Windows
+- **Planned Platform Support:** Linux and macOS
 
-**Note:** These commands demonstrate the intended build setup. The application must implement the corresponding host and client functionality before the executables can be used for file sharing.
 
-## How It Works
+## Feedback & Contributions
 
-The planned architecture separates connection management, room discovery, and file transfer.
-
-### 1. Hosting
-
-The host creates a TCP socket, binds it to an IP address and port, and listens for incoming connections.
-
-When a client connects, the host accepts the connection and uses the resulting connected socket to communicate with that client.
-
-### 2. Connecting
-
-The client connects to the host's IP address and TCP port.
-
-Once connected, the client and host can exchange data over the TCP connection.
-
-### 3. File Transfer
-
-Files are read in binary mode and transferred in chunks.
-
-The receiving device writes the incoming bytes to a file. A transfer protocol will track the file size and completion status so that the receiver knows when the complete file has arrived.
-
-### 4. Room Discovery
-
-UDP broadcast is planned to help devices discover sharing rooms on the same local network.
-
-Discovery may depend on the network configuration. Some Wi-Fi networks, especially managed or campus networks, restrict communication between connected devices.
-
-### 5. QR Code Downloads
-
-A future feature will let users generate a QR code for a shared file.
-
-The QR code will contain a URL that a phone can open in its browser. The phone will then download the file from the host or another designated server.
-
-Access from outside the local network may require a tunneling service or relay infrastructure.
-
-## Security Considerations
-
-Security is an important part of the planned implementation.
-
-- Validate incoming connections and file-transfer requests.
-- Restrict access to files explicitly shared by the user.
-- Validate filenames and prevent directory traversal.
-- Handle incomplete transfers and connection failures safely.
-- Use unpredictable, temporary access tokens for browser-based downloads.
-- Expire temporary download links and stop serving files when sharing ends.
-- Avoid exposing the host to public networks without appropriate security controls
+I'm open to feedback, constructive criticism, and suggestions for improvement. Feel free to reach out to me via email or LinkedIn. I'm always willing to learn, improve, and collaborate with others!
