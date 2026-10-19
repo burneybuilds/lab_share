@@ -2,6 +2,15 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+
+// Takes user_input to bind with the Ip / Host
+char *take_ip(void){
+    static char arr[16];
+    printf("Enter the IPv4:  ");
+    scanf("%15s", arr);
+    return arr;
+}
+
 void join_connection(void)
 {
     WSADATA wsaData;
@@ -9,7 +18,13 @@ void join_connection(void)
 
     // Initialize the Winsock API
     int flag = WSAStartup(MAKEWORD(2, 2), &wsaData);
-
+    
+    if (flag != 0)
+    {
+        printf("Winsock initialization failed.\n");
+        return;
+    }
+    
     // Create a TCP socket for the client
     TcpConnectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -23,11 +38,14 @@ void join_connection(void)
     serverAddress.sin_port = htons(8080);
 
     // Get the target host's IP address from the user
-    // char serverIP[16] = take_ip();
+    char *serverIP = take_ip();
 
     // Convert the IP address from text to binary format
-    inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr);
-
+    if (inet_pton(AF_INET, serverIP, &serverAddress.sin_addr) != 1) {
+        printf("Invalid IPv4 address.\n");
+        return;
+    }
+    
     // Attempt to establish a TCP connection with the host
     int connection_pool = connect(TcpConnectionSocket, (SOCKADDR *)&serverAddress, sizeof(serverAddress));
 
@@ -36,6 +54,8 @@ void join_connection(void)
         printf("Something went wrong while connecting to the host.\n");
     }
 
+
+    
     // Close the client socket
     closesocket(TcpConnectionSocket);
 
@@ -43,12 +63,3 @@ void join_connection(void)
     WSACleanup();
 }
 
-// char take_ip(){
-//     char user_input[16]; 
-    
-//     // Ask the user to enter the host's IPv4 address
-//     printf("Enter the host IP address: ");
-//     scanf("%15s", user_input);
-    
-//     return user_input;
-// }

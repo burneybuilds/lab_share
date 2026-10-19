@@ -7,7 +7,7 @@
 
 void create_connection(void) {
     
-    printf("[-] Searching for Connection.....\n");
+    printf("[/] Searching for Connection.....\n");
     
     WSADATA wsaData;
     SOCKET ListenSocket; 
@@ -53,7 +53,7 @@ void create_connection(void) {
         WSACleanup();
     }
 
-    printf("[+] Connection Found.\n");
+    printf("[+] Connection Closed.\n");
     
     // Cleanup
     closesocket(AcceptSocket);
@@ -70,25 +70,46 @@ int code_generator(void){
     int number = 1000 + rand() % 9000;
     return number ;
 }
-void main_controller(void){
+
+void cli_options(void){
     printf("==================Lab Share=====================\n");
     printf("1. Send File. \n");
     printf("2. Receive File. \n");
     printf("3. Back. \n");
     printf("================================================\n");
+}
 
+
+void host_menu_handler(void){
+   
     int user_input = 0;
     int code = code_generator();
+    cli_options();
     create_connection();
-    
+    printf("IPV4 Addre: ");
+    printf("Room Code: %d\n", code);
     do
     {
         printf("Choose Your Option.\n<input>");
         
+        // Check the input stream for any errors.
         if (scanf("%d", &user_input) != 1)
         {
-            printf("Invalid input.\n");
-            return;
+            system("cls");
+            cli_options();
+            printf("===================Error=========================\n");
+            printf("Invalid input! Please enter a number.\n");
+            printf("=================================================\n");
+
+            // Clear invalid input from the input buffer.
+            int ch;
+
+            // getchar() reads a character from the input stream and returns its integer value (ASCII value on ASCII-compatible systems).
+            // This loop runs until a newline or EOF is encountered, clearing the remaining input.
+            while ((ch = getchar()) != '\n' && ch != EOF)
+            {
+            }
+
         }
 
         if (user_input == 1)
@@ -107,6 +128,7 @@ void main_controller(void){
             else
             {
                 printf("File selection cancelled or failed.\n");
+                
             }
         }
         else if (user_input == 2)
@@ -117,7 +139,6 @@ void main_controller(void){
         else if (user_input != 3)
         {
             printf("Invalid option. Please choose 1, 2, or 3.\n");
-            system("Clear");
         }
 
     } while (user_input != 3);
