@@ -16,8 +16,8 @@ int cli_interface_handler(void)
     system("cls");
 
     printf("===================Lab Share====================\n");
-    printf("1. Generate Code.\n");
-    printf("2. Connect Code.\n");
+    printf("1. Host a Session\n");
+    printf("2. Connect to a Session\n");
     printf("3. Settings.\n");
     printf("4. Exit.\n");
     printf("=================================================\n");

@@ -5,90 +5,121 @@
 
 #include "transfer.h"
 
-void create_connection(int close_connection_signal) {
-    
-    printf("[/] Searching for Connection.....\n");
-    
+int initialize_winsock(void){
     WSADATA wsaData;
-    SOCKET ListenSocket; 
-    SOCKET AcceptSocket;
+    
+    int wsaResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    int iResult = 0;  
-
-    // Check if the input is != 0.
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        printf("[-] Winsock initialization failed.\n");
-        WSACleanup();
+    // Check if the output of the WSA startup is not 0 .
+    if (wsaResult != 0) {
+        return 1;
     }
-    else{
-        printf("[+] Winsock initializationed.\n");
-    }
+ 
+    return 0;
+}
 
+SOCKET create_server_socket(void){
+    SOCKET ListenSocket = INVALID_SOCKET;
+    
     ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    // Creates a socket using the socket() function and stores the returned socket in ListenSocket.
-    if (ListenSocket == INVALID_SOCKET)
-    {
-        printf("[-] Socket creation failed.\n");
-        closesocket(ListenSocket);
-        WSACleanup();
-    }
-    else{
-        printf("[+] Socket created.\n");
-    }
 
+    if (ListenSocket == INVALID_SOCKET) {
+        return INVALID_SOCKET;
+    }
+    
+    return ListenSocket;
+}
+
+int bind_server_socket(SOCKET ListenSocket, unsigned short port){
     struct sockaddr_in service = {0};
 
-    // Assigns the IP address type: we are using IPv4.
-    service.sin_family = htonl(INADDR_ANY);
-    // Assigns the port number.
-    service.sin_port = htons(8080);
-    // Assigns the IP address.
-    service.sin_addr.s_addr = inet_addr(INADDR_ANY);
+    service.sin_family = AF_INET;                // Assign the IP address type: IPv4.
+    service.sin_port = htons(port);              // Assign the port number.
+    service.sin_addr.s_addr = htonl(INADDR_ANY); // Accept connections on all local IPv4 interfaces.
 
-    // After assigning the address information, bind it to the socket we created.
-    
-    iResult = bind(ListenSocket, (struct sockaddr *)&service, sizeof(service));
-    if (iResult == SOCKET_ERROR) {
-        wprintf(L"bind failed with error %u\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-    }
-    else
-        wprintf(L"bind returned success\n");
+    int error_flag = bind(ListenSocket, (struct sockaddr *)&service, sizeof(service));
 
-    // Listen for incoming connection requests on the socket.
-    // listen(ListenSocket, SOMAXCONN);
-        
-    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
-        wprintf(L"listen function failed with error: %d\n", WSAGetLastError());
-
-
-    iResult = closesocket(ListenSocket);
-    if (iResult == SOCKET_ERROR) {
-        wprintf(L"closesocket function failed with error %d\n", WSAGetLastError());
-        WSACleanup();
-        
-    }
-
-    // Accepts an incoming connection on the listening socket and stores the
-    // returned connected socket in AcceptSocket.
-    AcceptSocket = accept(ListenSocket, NULL, NULL);
-    // int flag = validate_incoming_connection(ListenSocket, AcceptSocket);
-
-    if (AcceptSocket == SOCKET_ERROR){
-        printf("[-] A Socket creation failed.\n");
-        closesocket(AcceptSocket);
-        closesocket(ListenSocket);
-        WSACleanup();
+    if (error_flag == SOCKET_ERROR) {
+        return 1;
     }
     
-    if (close_connection_signal ==  3){
-    // Cleanup
-        printf("[+] Connection Closed.\n");
-        closesocket(AcceptSocket);
+    return 0;
+}
+
+int start_listening(SOCKET ListenSocket){
+    
+    int e_flag = listen(ListenSocket, SOMAXCONN);
+
+    if (e_flag == SOCKET_ERROR) {
+        return 1;
+    }
+
+    return 0;
+}
+
+SOCKET accept_client(SOCKET ListenSocket){
+    SOCKET ClientSocket;
+    
+    ClientSocket = accept(ListenSocket, NULL, NULL);
+    if (ClientSocket == INVALID_SOCKET) {
+        return INVALID_SOCKET;
+    }
+
+    return ClientSocket;
+}
+
+int run_server(void){
+    
+    // 101 = WSA Failer.
+    // 201 = Bind Failer. 
+    // 301 || 302 = Socket Failer.
+    // 401 = Listening Failer.
+
+    int wsa_flag = initialize_winsock(); // initialize_winsock() Returns 1 if the WSA Fails.. 
+    if (wsa_flag != 0){
+        printf("[-] Winsock initialization failed.\n");
+        return 101;
+    }
+
+
+    SOCKET ListenSocket = create_server_socket();
+    if (ListenSocket ==  INVALID_SOCKET){
+        printf("[-] Socket creation failed.\n");
+        WSACleanup();
+        return 301;
+    }
+
+    int bind_flag = bind_server_socket(ListenSocket, 8080);
+    if (bind_flag != 0){
+        printf("[-] bind failed with error.\n");
         closesocket(ListenSocket);
         WSACleanup();
+        return 201;
     }
+
+
+    int listen_flag = start_listening(ListenSocket);
+    if (listen_flag != 0){
+        printf("[-] listen failed with error.\n");
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 401;
+    }
+
+
+    SOCKET client_session = accept_client(ListenSocket);
+    if (client_session == INVALID_SOCKET){
+        printf("[-] accept failed with error.\n");
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 302;
+    }
+     
+    // It just closed… just like your ex did. 
+    closesocket(client_session);
+    closesocket(ListenSocket);
+    WSACleanup();
+    return 0;
 }
 
 // int validate_incoming_connection(SOCKET Listen, SOCKET accept){
@@ -109,13 +140,12 @@ void cli_options(void){
     printf("================================================\n");
 }
 
-
 void host_menu_handler(void){
    
     int user_input = 0;
     int code = code_generator();
     cli_options();
-    create_connection(user_input);
+    run_server();
     printf("IPV4 Addre: \n");
     printf("Room Code: %d\n", code);
     do
