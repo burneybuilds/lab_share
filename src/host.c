@@ -68,7 +68,7 @@ SOCKET accept_client(SOCKET ListenSocket){
     return ClientSocket;
 }
 
-int run_server(void){
+int server_side_handler(void){
     
     // 101 = WSA Failer.
     // 201 = Bind Failer. 
@@ -106,6 +106,7 @@ int run_server(void){
         return 401;
     }
 
+    printf("[+] Host Ready..\n[/]Waiting for a connection\n");
 
     SOCKET client_session = accept_client(ListenSocket);
     if (client_session == INVALID_SOCKET){
@@ -114,11 +115,15 @@ int run_server(void){
         WSACleanup();
         return 302;
     }
-     
+    
+    printf("[+] Connection Establed.\n");
+
     // It just closed… just like your ex did. 
     closesocket(client_session);
     closesocket(ListenSocket);
     WSACleanup();
+
+
     return 0;
 }
 
@@ -140,38 +145,44 @@ void cli_options(void){
     printf("================================================\n");
 }
 
+int input_handler(int user_input){        
+    if (user_input != 1)
+    {
+        // Clear invalid input from the input buffer.
+        int ch;
+
+        // getchar() reads a character from the input stream and returns its integer value (ASCII value on ASCII-compatible systems).
+        // This loop runs until a newline or EOF is encountered, clearing the remaining input.
+        while ((ch = getchar()) != '\n' && ch != EOF)
+        {
+            // its empty..  i know i know 
+        }
+        return 1;
+    }
+    return 0;
+}
+
+
 void host_menu_handler(void){
    
     int user_input = 0;
-    int code = code_generator();
+    int room_code = code_generator();
     cli_options();
-    run_server();
+    server_side_handler();
     printf("IPV4 Addre: \n");
-    printf("Room Code: %d\n", code);
+    printf("Room Code: %d\n", room_code);
     do
     {
-        printf("<input>");
-        
+        printf("<input> ");
+        scanf("%d", &user_input);
+
         // Check the input stream for any errors.
-        if (scanf("%d", &user_input) != 1)
-        {
-            system("cls");
-            cli_options();
+        if ((input_handler(user_input)) == 1){
             printf("===================Error=========================\n");
             printf("Invalid input! Please enter a number.\n");
             printf("=================================================\n");
-
-            // Clear invalid input from the input buffer.
-            int ch;
-
-            // getchar() reads a character from the input stream and returns its integer value (ASCII value on ASCII-compatible systems).
-            // This loop runs until a newline or EOF is encountered, clearing the remaining input.
-            while ((ch = getchar()) != '\n' && ch != EOF)
-            {
-            }
-
         }
-
+ 
         if (user_input == 1)
         {
             char *path = file_selecter(1);

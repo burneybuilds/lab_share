@@ -21,5 +21,5 @@ void close_connection(SOCKET ClientSocket);
 
 void cleanup_server(SOCKET ListenSocket);
 
-int run_server(void);
+int server_side_handler(void);
 #endif

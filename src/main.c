@@ -7,7 +7,6 @@
 #include "client.h"
 
 
-
 int cli_interface_handler(void)
 {
     int user_input = 0;
@@ -58,7 +57,7 @@ void settings(){
     int max_connections;
 
     // Opens the file in "w" == write Mode.
-    fp = fopen("settings.text", "r");
+    fp = fopen("../config/settings.txt", "r");
 
     // checks if the file is not there and return 1 exit code == Error.
     if (fp == NULL) {
@@ -80,17 +79,25 @@ void settings(){
     printf("Connection Timeout: %d\n", max_connections );
     printf("=================================================\n");
     
+    printf("[+] Press Enter to close the session.\n");
+    getchar();
+    getchar();
+    
     fclose(fp);
     // return 0;
+
 }
 
+
 void client(){
-    join_connection();
+    client_side_handler();
 }
+
 
 void host(){
     host_menu_handler();
 }
+
 
 int main(void){
 
