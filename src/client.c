@@ -11,6 +11,7 @@ char *take_ip(void){
     return arr;
 }
 
+
 int validate_ip_address(const char *ip)
 {
     struct in_addr address;
@@ -23,6 +24,7 @@ int validate_ip_address(const char *ip)
 
     return 0; // Valid IP. Green flag!
 }
+
 
 int initialize_winsock_client(void){
     WSADATA wsaData;
@@ -49,12 +51,13 @@ SOCKET client_session(){
     return TcpConnectionSocket;
 }
 
+
 int connect_to_host(SOCKET client){
     
     int flag = 1;
     char *serverIP;
     while(flag == 1){
-        char *serverIP = take_ip();
+        serverIP = take_ip();
 
         if (validate_ip_address(serverIP) == 0) {
             flag = 0;
