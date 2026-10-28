@@ -6,6 +6,11 @@
 #include "host.h"
 #include "client.h"
 
+// Prototypes.
+int cli_interface_handler(void);
+void client();
+void host();
+void settings();
 
 int cli_interface_handler(void)
 {

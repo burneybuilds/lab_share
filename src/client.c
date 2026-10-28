@@ -2,6 +2,13 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+// Prototypes.
+char *take_ip(void);
+int validate_ip_address(const char *ip);
+int initialize_winsock_client(void);
+SOCKET client_session();
+int connect_to_host(SOCKET client);
+void client_side_handler(void);
 
 // Takes user_input to bind with the Ip / Host
 char *take_ip(void){

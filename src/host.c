@@ -5,6 +5,21 @@
 
 #include "transfer.h"
 
+// Prototypes.
+int initialize_winsock(void);
+SOCKET create_server_socket(void);
+int bind_server_socket(SOCKET ListenSocket, unsigned short port);
+int start_listening(SOCKET ListenSocket);
+int server_side_handler(void);
+int code_generator(void);
+void cli_options(void);
+int input_handler(int user_input);
+void host_menu_handler(void);
+void cli_options(void);
+int input_handler(int user_input);
+SOCKET accept_client(SOCKET ListenSocket);
+
+
 int initialize_winsock(void){
     WSADATA wsaData;
     
@@ -144,6 +159,7 @@ void cli_options(void){
     printf("3. Back. \n");
     printf("================================================\n");
 }
+
 
 int input_handler(int user_input){        
     if (user_input != 1)

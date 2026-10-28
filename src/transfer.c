@@ -3,8 +3,19 @@
 #include <windows.h>
 #include <commdlg.h>
 
+// Prototypes.
+char *file_selecter(int user_input);
+
+
+/**
+ * @brief Opens the Windows file dialog to select a file.
+ * @param user_input Opens the dialog when the value is 1.
+ * @return Dynamically allocated file path on success, otherwise NULL.
+ * @note The caller must free the returned pointer.
+ */
 char *file_selecter(int user_input)
 {
+    // File pointers point toward files, unlike your crush. :')
     char filePath[MAX_PATH] = {0};
 
     OPENFILENAMEA ofn = {0};
@@ -38,10 +49,10 @@ char *file_selecter(int user_input)
 
     return NULL;
 }
-void send_file(){
+// void send_file(){
 
-}
+// }
 
-void receive_file(){
+// void receive_file(){
 
-}
+// }
