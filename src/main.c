@@ -95,7 +95,7 @@ void settings(){
 
 
 void client(){
-    client_side_handler();
+    client_side_menu();
 }
 
 

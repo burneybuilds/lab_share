@@ -2,36 +2,24 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+#include "transfer.h"
+
 // Prototypes.
 char *take_ip(void);
 int validate_ip_address(const char *ip);
 int initialize_winsock_client(void);
 SOCKET client_session();
 int connect_to_host(SOCKET client);
-void client_side_handler(void);
+SOCKET client_side_handler(void);
+void client_side_menu();
 
 // Takes user_input to bind with the Ip / Host
 char *take_ip(void){
     static char arr[16];
-    printf("Enter the IPv4:  ");
+    printf("Enter the Host IP:  ");
     scanf("%15s", arr);
     return arr;
 }
-
-
-int validate_ip_address(const char *ip)
-{
-    struct in_addr address;
-
-    int flag = inet_pton(AF_INET, ip, &address);
-
-    if (flag != 1) {
-        return 1; // Invalid IP. Don't worry, this isn't a red flag like your ex.
-    }
-
-    return 0; // Valid IP. Green flag!
-}
-
 
 int initialize_winsock_client(void){
     WSADATA wsaData;
@@ -84,15 +72,14 @@ int connect_to_host(SOCKET client){
     return 0;
 }
 
-
-void client_side_handler(void)
+SOCKET client_side_handler(void)
 {
     // Let's get this thing online.
     int flag = initialize_winsock_client();
     if (flag != 0)
     {
         printf("[-] Failed to initialize Winsock.\n");
-        return;
+        return 1;
     }
 
     // Time to make a socket. No socket, no talking.
@@ -101,7 +88,7 @@ void client_side_handler(void)
     if (client == INVALID_SOCKET){
         printf("[-] Failed to create client socket.\n");
         WSACleanup();
-        return;
+        return 1;
     }
 
     // Let's see if the host picks up the phone because your crush isn't picking up the call...
@@ -112,25 +99,68 @@ void client_side_handler(void)
         printf("[-] Failed to connect to the host.\n");
         closesocket(client);
         WSACleanup();
-        return;
+        return 1;
     }
     // Boom, you got dumb...
-    else if (connection_flag == 1){
+    if (connection_flag == 1){
         printf("[-] Invalid IPv4 address. Try again, Sherlock.\n");
         closesocket(client);
         WSACleanup();
-        return;
+        return 1;
     }
-    else{
-        printf("[+] Successfully connected to the host!\n");
-        getchar();
-        getchar();
-    }
+    // else{
+    //     printf("[+] Successfully connected to the host!\n");
+    //     getchar();
+    //     getchar();
+    // }
 
     // If you're wondering why 2 comes before 1, the answer is honestly, I don't know.....
     // getchar();
-    // getchar();
-    // All that work just to say hello. Classic.
-    closesocket(client);
+    // getchar()
+    return client; 
+}
+
+int validate_ip_address(const char *ip)
+{
+    struct in_addr address;
+
+    int flag = inet_pton(AF_INET, ip, &address);
+
+    if (flag != 1) {
+        return 1; // Invalid IP. Don't worry, this isn't a red flag like your ex.
+    }
+
+    return 0; // Valid IP. Green flag!
+}
+
+
+void client_side_menu(){
+    int user_input = 0 ;
+    SOCKET client_session = client_side_handler();
+    
+    printf("==================Lab Share=====================\n");
+    printf("1. Send File. \n");
+    printf("2. Receive File. \n");
+    printf("3. Back. \n");
+    printf("================================================\n");
+
+    while(user_input != 3){
+        printf("<Input> ");
+        scanf("%d", &user_input);
+        if(user_input == 1){
+            char *user_input ;
+            send_file(client_session, *user_input);
+        }
+        else if (user_input == 2){
+            //
+        }
+        else if (user_input == 3){
+            break;
+        }
+    }
+
+    // All that work just to say hello. Classic.   
+    closesocket(client_session);
     WSACleanup();
+    return;
 }

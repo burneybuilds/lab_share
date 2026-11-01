@@ -3,9 +3,16 @@
 #include <windows.h>
 #include <commdlg.h>
 
+#include "host.h"
+
 // Prototypes.
 char *file_selecter(int user_input);
 
+
+// typedef struct {
+//     SOCKET client_socket;
+//     SOCKET listen_socket;
+// } HostConnection;
 
 /**
  * @brief Opens the Windows file dialog to select a file.
@@ -49,9 +56,34 @@ char *file_selecter(int user_input)
 
     return NULL;
 }
-// void send_file(){
 
-// }
+int send_file(SOCKET connection_session, const char *input_buffer)
+{
+    int total_sent = 0;
+    int message_length = (int)strlen(input_buffer);
+
+    while (total_sent < message_length)
+    {
+        int iResult = send(connection_session, input_buffer + total_sent, message_length - total_sent, 0);
+
+        if (iResult == SOCKET_ERROR)
+        {
+            printf("Send failed: %d\n", WSAGetLastError());
+            return 1;
+        }
+
+        if (iResult == 0)
+        {
+            printf("Connection closed while sending.\n");
+            return 1;
+        }
+
+        total_sent += iResult;
+    }
+
+    printf("[+] Message sent successfully.\n");
+    return 0;
+}
 
 // void receive_file(){
 
