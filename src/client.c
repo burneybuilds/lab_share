@@ -134,33 +134,54 @@ int validate_ip_address(const char *ip)
 }
 
 
-void client_side_menu(){
-    int user_input = 0 ;
-    SOCKET client_session = client_side_handler();
-    
+void client_side_menu()
+{
+    int user_input = 0;
+    SOCKET client = client_side_handler();
+
+    if (client == INVALID_SOCKET)
+    {
+        return;
+    }
+
     printf("==================Lab Share=====================\n");
-    printf("1. Send File. \n");
-    printf("2. Receive File. \n");
-    printf("3. Back. \n");
+    printf("1. Send Message.\n");
+    printf("2. Back.\n");
     printf("================================================\n");
 
-    while(user_input != 3){
+    while (user_input != 3)
+    {
         printf("<Input> ");
         scanf("%d", &user_input);
-        if(user_input == 1){
-            char *user_input ;
-            send_file(client_session, *user_input);
+
+        if (user_input == 1)
+        {
+            char message[1024];
+
+            getchar(); // Clear leftover newline
+
+            printf("You: ");
+            fgets(message, sizeof(message), stdin);
+
+            send_file(client, message);
         }
-        else if (user_input == 2){
-            //
+        else if (user_input == 2)
+        {
+            char message[1024];
+
+            int result = receive_message(client, message, sizeof(message));
+
+            if (result != 0)
+            {
+                break;
+            }
         }
-        else if (user_input == 3){
+        else if (user_input == 3)
+        {
             break;
         }
     }
 
-    // All that work just to say hello. Classic.   
-    closesocket(client_session);
+    closesocket(client);
     WSACleanup();
-    return;
 }

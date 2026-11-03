@@ -2,7 +2,7 @@
 #define TRANSFER_H
 
 char *file_selecter(int user_input);
-void send_file(void);
-int receive_file(void);
+int send_file(SOCKET connection_session, const char *input_buffer);
+int receive_message(SOCKET connection_session, char *buffer, int buffer_size);
 
 #endif

@@ -2,6 +2,7 @@
 #define HOST_H
 
 #include <winsock2.h>
+#include <windows.h>
 
 // Store both sockets.
 typedef struct {

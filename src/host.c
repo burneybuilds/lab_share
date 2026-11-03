@@ -165,8 +165,7 @@ int code_generator(void){
 void cli_options(void){
     printf("==================Lab Share=====================\n");
     printf("1. Send File. \n");
-    printf("2. Receive File. \n");
-    printf("3. Back. \n");
+    printf("2. Back. \n");
     printf("================================================\n");
 }
 
@@ -224,8 +223,8 @@ void host_menu_handler(void){
             // {
             //     printf("File selected: %s\n", path);
 
-                // Next step: pass the path to your file-transfer function.
-                // send_file(path);
+            //     // Next step: pass the path to your file-transfer function.
+            //     send_file(path);
 
             //     free(path);
             // }
@@ -234,6 +233,17 @@ void host_menu_handler(void){
             //     printf("File selection cancelled or failed.\n");
                 
             // }
+                    
+            char message[1024];
+
+            printf("You: ");
+            fgets(message, sizeof(message), stdin);
+
+            // Remove the newline added by fgets
+            message[strcspn(message, "\n")] = '\0';
+
+            send_file(connection.client_socket , message);
+
         }
         else if (user_input == 2)
         {
