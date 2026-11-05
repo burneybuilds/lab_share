@@ -2,7 +2,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#include "transfer.h"
+#include "client.h"
+#include "transfer.h"   
 
 // Prototypes.
 char *take_ip(void);
@@ -66,7 +67,7 @@ int connect_to_host(SOCKET client){
     
     int connection_pool = connect(client, (SOCKADDR *)&serverAddress, sizeof(serverAddress));
     if (connection_pool == SOCKET_ERROR){
-        return 2;
+        return connection_pool;
     }
 
     return 0;

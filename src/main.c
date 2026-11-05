@@ -55,7 +55,7 @@ int cli_interface_handler(void)
 
 // This fucntion is where file handling of setting is done. 
 void settings(){
-    FILE *fp;
+    FILE *fp;                                                                                                                                                                                                                                                                                                                                                                                                                         
     char user_name[50];
     int port;
     int connection_timeout;

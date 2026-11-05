@@ -1,0 +1,44 @@
+
+name: LabShare CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup GCC
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-gcc
+
+      - name: Build LabShare
+        shell: msys2 {0}
+        run: |
+          gcc src/main.c src/client.c src/host.c src/transfer.c \
+            -o LabShare.exe \
+            -Iinclude \
+            -lws2_32 -lcomdlg32
+
+      - name: Build test executable
+        shell: msys2 {0}
+        run: |
+          gcc tests/test_client.c src/client.c src/transfer.c \
+            -o tests/test_client.exe \
+            -Iinclude \
+            -lws2_32 -lcomdlg32
+
+      - name: Run tests
+        shell: msys2 {0}
+        run: |
+          ./tests/test_client.exe
