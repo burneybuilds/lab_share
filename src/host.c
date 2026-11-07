@@ -192,11 +192,15 @@ void host_menu_handler(void){
    
     int user_input = 0;
     int room_code = code_generator();
-    cli_options();
+    // cli_options();
+    printf("==================Lab Share=====================\n");
+    printf("Waiting for Connection\n");
+    printf("================================================\n");
     printf("IPV4 Addre: \n");
     printf("Room Code: %d\n", room_code);
     HostConnection connection = server_side_handler();
-
+    system("cls");
+    cli_options();
     // if (connection == INVALID_SOCKET)
     // {
     //     printf("[-] Connection initialization failed.\n");
@@ -204,6 +208,7 @@ void host_menu_handler(void){
     // }
     do
     {
+        
         printf("<input> ");
         scanf("%d", &user_input);
 

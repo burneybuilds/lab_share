@@ -1,153 +1,412 @@
-Lab Share
-Code Review, Fix List, and Next Steps
-Based on the uploaded C source files, headers, and Makefile
+LABSHARE — CODE REVIEW TODO LIST
+=================================
 
-## Purpose
+Basis: Review of the uploaded source files:
+- client.c
+- host.c
+- main.c
+- transfer.c
+- client.h
+- host.h
+- transfer.h
 
-Use this document as a working checklist while improving Lab Share. Fix the issues in order, test after each stage, and avoid adding advanced features until a basic file transfer works reliably. The review is based on the files supplied in this conversation; the project has not yet been compiled or run here.
+Status: Review findings from static source inspection. These items have not
+been verified by compiling or running the Windows Winsock application.
 
-## Current status
+PRIORITY KEY
+------------
+[P0] Critical: fix before relying on the current connection/messaging flow.
+[P1] High: fix before expanding functionality.
+[P2] Medium: address during cleanup/refactoring or before release.
 
+============================================================
+1. CRITICAL BUGS — P0
+============================================================
 
-| Area | Status | Observation |
-| --- | --- | --- |
-| Application menu | Present in main.c | The menu routes to host, client, settings, and exit. |
-| TCP host setup | Basic implementation | Winsock startup, socket creation, bind, listen, and accept are present. |
-| TCP client setup | Basic implementation | The client validates an IPv4 address and attempts to connect on port 8080. |
-| File picker | Implemented | file_selecter() returns a dynamically allocated path; caller frees it. |
-| File transfer | Not implemented | The send/receive functions are commented out or not connected to the socket workflow. |
-| Session lifecycle | Needs fixing | The host closes the accepted client after accepting it; the client closes after the connection message. |
-| Room code | Partial | A four-digit number is generated but is not used in a session-join protocol. |
-| Multiple clients | Not implemented | The host currently accepts one client and then ends the server handler. |
+[+] P0-01: Return INVALID_SOCKET from every failed SOCKET-returning path.
+    File: client.c
+    Function: client_side_handler()
+    Issue:
+      The function returns 1 on Winsock initialization and socket/connect
+      failures, even though callers check for INVALID_SOCKET. Since 1 is not
+      INVALID_SOCKET, a failed setup can be mistaken for a valid socket.
+    Fix:
+      Return INVALID_SOCKET on every failure path. Keep success paths
+      returning the actual socket handle.
 
+[ ] P0-02: Standardize connect_to_host() error handling.
+    File: client.c
+    Function: connect_to_host()
+    Issue:
+      connect() failure returns SOCKET_ERROR (-1), but client_side_handler()
+      checks for 1 and 2. The actual failure value is therefore not handled
+      as intended, and the client may return an unconnected socket.
+    Fix:
+      Use a consistent success/failure convention (for example, 0 on success
+      and non-zero on failure), capture WSAGetLastError() immediately after
+      a failed Winsock call, and check inet_pton()'s return value.
 
-## Priority 1 — Fix before implementing transfer
+[ ] P0-03: Validate the host connection before using its sockets.
+    File: host.c
+    Function: host_menu_handler()
+    Issue:
+      server_side_handler() can return a HostConnection containing
+      INVALID_SOCKET handles after initialization, bind, listen, or accept
+      failure. host_menu_handler() does not check the returned handles
+      before calling send_file().
+    Fix:
+      Check client_socket and listen_socket immediately after setup. On
+      failure, report the error and return without entering the connected
+      menu or attempting I/O.
 
+[ ] P0-04: Fix the message framing mismatch.
+    Files: transfer.c, host.c
+    Functions: send_file(), receive_message(), host_menu_handler()
+    Issue:
+      receive_message() waits for a newline delimiter. The host removes the
+      newline from its input with strcspn() before sending, so the receiver
+      may wait indefinitely for a delimiter or more data.
+    Fix:
+      Define one framing protocol and use it on both ends. For a simple
+      text-only prototype, send the newline delimiter and read until it.
+      For a more robust protocol, use a fixed-size header containing message
+      type and payload length, then receive exactly that many bytes. TCP is
+      a byte stream: one send() does not correspond to one recv().
 
-### Give every header a unique include guard.
+[ ] P0-05: Implement receiving on the host side.
+    File: host.c
+    Function: host_menu_handler()
+    Issue:
+      The host's option for receiving currently only prints a message.
+      It does not call receive_message(), so the current application does
+      not provide complete bidirectional messaging.
+    Fix:
+      Wire the host receive operation to the receive function and ensure
+      both client and host follow the same protocol.
 
-host.h currently uses RANDOM_H, and transfer.h also uses RANDOM_H. If both are included in one translation unit, the second header can be skipped. Use HOST_H for host.h and TRANSFER_H for transfer.h.
+[ ] P0-06: Fix settings-file NULL handling.
+    File: main.c
+    Function: settings()
+    Issue:
+      If fopen() fails, the code prints an error but continues to call
+      fscanf() with a NULL FILE pointer. This is undefined behavior and can
+      crash the application.
+    Fix:
+      Return immediately when fopen() returns NULL. Check every fscanf()
+      result before using or printing the corresponding setting.
 
-### Make client.h self-contained.
+============================================================
+2. HIGH-PRIORITY BUGS — P1
+============================================================
 
-client.h declares functions using SOCKET but does not include winsock2.h. Include <winsock2.h> in headers that expose SOCKET, and ensure winsock2.h is included before windows.h where both are used.
+[ ] P1-01: Fix the client menu's Back/exit mismatch.
+    File: client.c
+    Function: client_side_menu()
+    Issue:
+      The menu displays option 2 as Back, but the loop and break condition
+      use option 3. Selecting 2 does not exit as the menu promises.
+    Fix:
+      Make the displayed options and loop condition consistent. If Back is
+      option 2, exit on 2.
 
-### Fix settings() error handling in main.c.
+[ ] P1-02: Handle failed/non-numeric menu input.
+    Files: client.c, host.c
+    Issue:
+      Some scanf() calls do not check whether conversion succeeded. If the
+      user enters letters, the invalid input may remain in stdin and cause
+      repeated failures or a stuck menu.
+    Fix:
+      Check scanf() return values and clear the rest of the input line on
+      failure. Prefer a consistent fgets() plus strtol() input helper.
 
-If fopen("../config/settings.txt", "r") returns NULL, print the error and return immediately. Do not call fscanf() or fclose() on a NULL FILE pointer. Check fscanf() results before printing settings.
+[ ] P1-03: Consume the newline before host fgets().
+    File: host.c
+    Function: host_menu_handler()
+    Issue:
+      scanf("%d", &user_input) leaves the newline in stdin. The following
+      fgets() may read that newline immediately, producing an empty message.
+    Fix:
+      Consume the rest of the input line after successfully reading the menu
+      number, or migrate menu input to fgets() and strtol().
 
-### Correct the settings labels.
+[ ] P1-04: Make host menu options consistent.
+    File: host.c
+    Function: cli_options(), input_handler(), host_menu_handler()
+    Issue:
+      The displayed menu says option 2 is Back, but its implementation says
+      it is waiting to receive a file. input_handler() accepts 1 through 3,
+      although the displayed menu does not clearly define option 3.
+    Fix:
+      Decide and document the menu actions, then make display, validation,
+      and implementation agree.
 
-The current output labels both connection_timeout and max_connections as “Connection Timeout”. Label max_connections correctly.
+[ ] P1-05: Validate receive_message() arguments.
+    File: transfer.c
+    Function: receive_message()
+    Issue:
+      buffer and buffer_size are not validated. A NULL buffer or a size of
+      zero/one can lead to invalid memory access or an out-of-bounds
+      terminator write.
+    Fix:
+      Reject NULL buffers and buffer_size values that cannot hold at least
+      one character plus the terminating NUL byte.
 
-### Handle invalid menu input consistently.
+[ ] P1-06: Handle messages larger than the receive buffer.
+    File: transfer.c
+    Function: receive_message()
+    Issue:
+      If the message fills the buffer before the delimiter arrives, the
+      function returns with the rest of that message still in the TCP stream.
+      Those leftover bytes can be interpreted as the next message.
+    Fix:
+      Either reject and drain the rest of the framed message, or use a
+      length-prefixed protocol and receive the declared payload length.
 
-Check scanf() return values and clear invalid input. In host_menu_handler(), ensure invalid input does not trigger more than one misleading error message.
+[ ] P1-07: Handle empty messages and disconnects consistently.
+    Files: transfer.c, client.c, host.c
+    Issue:
+      Empty messages and connection closure need explicit protocol behavior.
+      The receiver currently distinguishes socket error and orderly shutdown,
+      but callers should handle each result consistently.
+    Fix:
+      Document return codes (success, disconnected, error, oversized input)
+      and make both menus respond appropriately.
 
-### Propagate host startup failures.
+[ ] P1-08: Implement centralized host connection cleanup.
+    Files: host.c, host.h
+    Issue:
+      close_connection() is declared in host.h but no implementation appears
+      in the uploaded host.c. Cleanup is duplicated across setup and menu
+      code, making missed/double cleanup easier.
+    Fix:
+      Implement close_connection(), close only valid sockets, reset handles,
+      and define clearly which function owns WSACleanup(). Avoid calling
+      WSACleanup() twice for one successful WSAStartup() lifecycle.
 
-host_menu_handler() calls server_side_handler() but ignores its return code. If the server fails to initialize, bind, listen, or accept, handle that failure and do not continue as if hosting succeeded.
+[ ] P1-09: Check all file and string operations.
+    Files: main.c, transfer.c
+    Issue:
+      fscanf() results are not checked. transfer.c uses strlen() and strcpy()
+      but does not include <string.h>.
+    Fix:
+      Include <string.h> where needed and validate all input, allocation,
+      file, and conversion results.
 
-### Keep the accepted socket open for the session.
+[ ] P1-10: Make transfer.h self-contained.
+    File: transfer.h
+    Issue:
+      The header uses SOCKET but does not include <winsock2.h>. It currently
+      relies on include order in source files.
+    Fix:
+      Include <winsock2.h> in transfer.h and ensure headers can be included
+      independently.
 
-Do not close the accepted client socket immediately after accept(). Keep it alive while protocol messages and file data are exchanged, then close it during cleanup.
+[ ] P1-11: Check socket API errors and preserve useful diagnostics.
+    Files: client.c, host.c
+    Issue:
+      Several failure messages are generic. Important Winsock errors are not
+      consistently captured and reported.
+    Fix:
+      Immediately capture WSAGetLastError() after failed Winsock calls such
+      as socket(), bind(), listen(), accept(), connect(), send(), and recv().
 
-## Priority 2 — Define a minimal transfer protocol
+[ ] P1-12: Check send/receive function results at call sites.
+    Files: client.c, host.c
+    Issue:
+      send_file() results are not consistently checked. A failed send should
+      affect the session state rather than silently returning to the menu.
+    Fix:
+      Check every return value and handle disconnect/error paths.
 
-For the first milestone, keep the design simple: one host and one client, one file per transfer, and a synchronous connection. Decide which side sends and which side receives before finalizing the public function signatures.
-1. Connect: client connects to the host's IPv4 address and configured port.
-1. Negotiate: sender announces a protocol version, filename (or safe basename), and file size using a defined representation.
-1. Validate: receiver checks the metadata, rejects invalid sizes/names, and chooses a destination path.
-1. Transfer: sender streams the file in binary mode; receiver writes chunks to disk.
-1. Complete: receiver reports success only after all expected bytes have been written.
-1. Cleanup: both sides close files and sockets on success, disconnect, or error.
+============================================================
+3. MEDIUM-PRIORITY DESIGN AND MAINTENANCE — P2
+============================================================
 
-### TCP implementation notes
+[ ] P2-01: Remove duplicate HostConnection definition.
+    Files: host.c, host.h
+    Issue:
+      HostConnection is defined in both the source and header.
+    Fix:
+      Keep the canonical typedef in host.h and include that header in host.c.
 
-- TCP is a byte stream. One send() call does not guarantee that every requested byte was sent, and one recv() call does not guarantee that a whole message arrived.
-- Implement send_all() and recv_all() helpers that loop until the requested byte count is handled or an error/disconnect occurs.
-- Use binary file modes: "rb" for reading the source and "wb" for writing the destination.
-- Do not send a raw C struct as a wire format without defining byte order, field sizes, and packing. Use explicit, documented fields.
-- Validate all received metadata. Never use an untrusted incoming filename as an unrestricted output path.
-- For the first version, set a reasonable maximum file size and reject malformed or incomplete transfers.
+[ ] P2-02: Remove duplicate function prototypes.
+    File: host.c
+    Issue:
+      cli_options() and input_handler() are declared twice in the source.
+    Fix:
+      Remove duplicate declarations and keep public declarations in headers.
 
-## Suggested function responsibilities
+[ ] P2-03: Separate networking, protocol, file I/O, and menu responsibilities.
+    Files: host.c, client.c, transfer.c
+    Issue:
+      Menu handling, connection setup, data transfer, and cleanup are mixed.
+    Fix:
+      Refactor incrementally into focused modules after the current behavior
+      is stable. Suggested modules: network/socket, connection, protocol,
+      message, file I/O, and file transfer.
 
+[ ] P2-04: Clarify function naming.
+    File: transfer.c
+    Issue:
+      send_file() currently sends a text message rather than a file.
+    Fix:
+      Rename it to send_message() for the current behavior. Reserve
+      send_file()/receive_file() for actual binary file transfer.
 
-| File | Responsibility |
-| --- | --- |
-| main.c | Menu and application navigation; settings loading and display. |
-| host.c | Start server, accept a client, manage host-side session, call receive logic when the host receives a file. |
-| client.c | Validate host address, connect, manage client-side session, call send logic when the client sends a file. |
-| transfer.c | File I/O, send_all/recv_all, metadata exchange, transfer status, and transfer-specific validation. |
-| host.h / client.h / transfer.h | Public declarations for functions implemented in the corresponding modules; unique include guards and required types. |
-| Makefile | Compile sources, link Winsock and common-dialog libraries, track header dependencies, and provide clean/build targets. |
+[ ] P2-05: Improve file selector behavior.
+    File: transfer.c
+    Issue:
+      file_selecter() is currently not connected to the transfer workflow.
+      The dialog filter allows all files, and the function name has a typo.
+    Fix:
+      Rename to file_selector(), decide allowed file types, handle dialog
+      cancellation distinctly from errors, and free returned memory in the
+      caller.
 
+[ ] P2-06: Make configuration loading robust.
+    File: main.c
+    Issue:
+      The settings path is relative to the process working directory, and
+      configuration values are not validated. The max_connections value is
+      printed with the label "Connection Timeout".
+    Fix:
+      Use a predictable config path, validate ranges and required fields,
+      and correct the output label.
 
-## Priority 3 — Makefile improvements
+[ ] P2-07: Clarify Winsock ownership.
+    Files: client.c, host.c
+    Issue:
+      WSAStartup()/WSACleanup() ownership is spread across functions.
+    Fix:
+      Define one clear lifecycle owner for each client or host session.
+      Ensure each successful WSAStartup() has a matching WSACleanup().
 
-The current Makefile has useful warning flags and links -lws2_32 and -lcomdlg32. Keep those if they match the APIs you use. Improve the build in these ways:
-- Add header dependencies so editing a .h file triggers a rebuild. For GCC, compiler-generated dependency files (-MMD -MP) are one option.
-- Consider compiling each .c file to an object file in build/ and linking the objects. This avoids recompiling every source file after each small change.
-- The commands mkdir -p and rm -f are Unix-style. They work in Git Bash/MSYS2 but may not work in Windows Command Prompt. Choose and document the shell used to run make.
-- The Makefile uses -Wconversion, -Wsign-conversion, and -Wmaybe-uninitialized. These can be useful but may produce extra warnings depending on the compiler version; address warnings rather than suppressing them blindly.
-- Check that the source paths in SRC match the actual project structure (src/main.c, src/host.c, src/client.c, src/transfer.c).
+[ ] P2-08: Improve IP input handling.
+    File: client.c
+    Issue:
+      take_ip() uses a static 16-byte buffer and scanf(). It is suitable for
+      a textual IPv4 address length but does not handle overlong input cleanly.
+    Fix:
+      Use fgets(), remove the newline, reject overlong input, and validate
+      inet_pton() before attempting connect().
 
-## Priority 4 — Reliability, security, and polish
+[ ] P2-09: Treat room codes as non-security features for now.
+    File: host.c
+    Issue:
+      code_generator() uses rand(), and the generated code is not checked by
+      the client or used to authorize a session.
+    Fix:
+      Do not describe the room code as authentication. If it becomes a
+      security control, use a suitable cryptographically secure random
+      source and implement server-side validation.
 
-- Check every important return value from WSAStartup(), socket(), bind(), listen(), accept(), connect(), send(), recv(), fopen(), fread(), fwrite(), and fclose() where applicable.
-- Use clear error messages that include the failed operation; where useful, capture WSAGetLastError() for Winsock failures.
-- Ensure all paths release allocated memory, open files, and sockets. Centralized cleanup paths can help.
-- Do not treat a four-digit room code as strong authentication. If room codes are used, limit guessing attempts and combine them with sensible local-network assumptions or stronger authentication.
-- For future versions, consider file-size limits, overwrite confirmation, transfer progress, cancellation, checksum verification, and a clear policy for where received files are saved.
-- Only after one transfer is stable, consider multiple clients, background threads or asynchronous I/O, and QR-code-based joining.
+[ ] P2-10: Document current single-client behavior.
+    File: host.c
+    Issue:
+      The host calls accept() once and handles one client. There is no
+      accept loop or concurrent client handling.
+    Fix:
+      Document the current single-client limit. Add multiple-client support
+      only if it is a project requirement.
 
-## Test plan and definition of done
+[ ] P2-11: Avoid unnecessary system("cls") dependence.
+    File: main.c
+    Issue:
+      system("cls") is Windows-specific and invokes a command processor.
+    Fix:
+      Keep it only if Windows-only behavior is intentional; otherwise remove
+      it or isolate terminal clearing behind a platform-specific helper.
 
+============================================================
+4. FILE TRANSFER WORK — NOT YET IMPLEMENTED
+============================================================
 
-| Test | Pass condition |
-| --- | --- |
-| Build | make clean and make complete without errors; review and resolve relevant warnings. |
-| Invalid input | Letters and out-of-range menu options do not crash the app or trap it in a confusing loop. |
-| Connection success | Start host, connect one client on the same machine or LAN, and keep the connection open. |
-| Connection failure | Try an invalid IP, a host that is not running, and a blocked/wrong port; the app reports failure and cleans up. |
-| Small file | Transfer a small text file and compare source and destination. |
-| Binary file | Transfer an image or other binary file and verify the bytes match. |
-| Large file | Transfer a file larger than a single typical socket buffer; confirm the transfer loops correctly. |
-| Disconnect/error | Close one side during transfer; the other side reports failure and releases resources. |
-| Repeat transfer | Perform multiple transfers without restarting the application, if that is the intended session behavior. |
+[ ] FT-01: Define a file-transfer protocol.
+    Include message type, filename policy, file size, and transfer status.
 
+[ ] FT-02: Send file metadata before file contents.
 
-## Recommended implementation order
+[ ] FT-03: Open files in binary mode and check fopen() errors.
 
-1. Fix header guards and required includes.
-1. Fix settings() and input handling.
-1. Build with the current Makefile and address compile errors.
-1. Fix the host/client socket lifecycle so the connection stays open.
-1. Agree on sender/receiver roles and define transfer function signatures.
-1. Implement and test send_all() / recv_all().
-1. Implement one-file transfer with metadata and safe destination handling.
-1. Verify text, binary, and larger files; test disconnect cleanup.
-1. Improve Makefile dependencies and object-file builds.
-1. Add room-code joining, multiple clients, progress, and QR features later.
+[ ] FT-04: Read and send file data in bounded chunks.
 
-## Implementation notes to keep in mind
+[ ] FT-05: Receive data in a loop until the declared file size is reached.
 
-The current client asks for an IPv4 address and uses port 8080. The host binds to INADDR_ANY on port 8080. This is suitable for an initial local-network test, but the port should eventually come from validated configuration. The current host handler accepts one client and then closes the session, so the first goal is a stable single-client transfer—not multi-client support.
-The headers currently declare handle_client(), close_connection(), and cleanup_server() in host.h, but those functions were not present in the supplied host.c. Either implement them when needed or keep the public header limited to functions that currently exist.
+[ ] FT-06: Write received data in binary mode and check fwrite() results.
 
-## Working checklist
+[ ] FT-07: Validate filenames and prevent path traversal or overwriting
+          unintended files.
 
-- [ ] Unique include guards fixed
-- [ ] Required headers included
-- [ ] Settings file errors handled safely
-- [ ] Menu input validated
-- [ ] Project compiles cleanly
-- [ ] Host keeps accepted socket open
-- [ ] Client keeps connection open during transfer
-- [ ] Transfer protocol documented
-- [ ] send_all() and recv_all() implemented
-- [ ] One file transfers correctly
-- [ ] Binary and large-file tests pass
-- [ ] Disconnect and cleanup tests pass
-- [ ] Only then: room code and multiple clients
+[ ] FT-08: Handle zero-byte files, large files, disk-full errors, and
+          interrupted transfers.
+
+[ ] FT-09: Verify received byte count and report transfer success only
+          after all expected bytes are written.
+
+[ ] FT-10: Define how the receiver chooses the destination directory and
+          resolves filename collisions.
+
+============================================================
+5. TEST PLAN
+============================================================
+
+[ ] TEST-01: Build with the project's strict warning flags.
+
+[ ] TEST-02: Start host and connect with a valid IPv4 address.
+
+[ ] TEST-03: Try malformed IPv4 input.
+
+[ ] TEST-04: Try connecting while the host is offline.
+
+[ ] TEST-05: Start a second host on the same port and verify bind failure
+            is handled without entering the session menu.
+
+[ ] TEST-06: Send messages in both directions repeatedly.
+
+[ ] TEST-07: Test empty, short, maximum-size, and oversized messages.
+
+[ ] TEST-08: Disconnect the host during a send and verify clean handling.
+
+[ ] TEST-09: Disconnect the client and verify the host detects it.
+
+[ ] TEST-10: Enter alphabetic and out-of-range menu input.
+
+[ ] TEST-11: Test missing and malformed settings files.
+
+[ ] TEST-12: Verify all sockets are closed and Winsock is cleaned up on
+            normal exit and every error path.
+
+[ ] TEST-13: Test file transfer with empty, small, and large files once
+            file transfer is implemented.
+
+[ ] TEST-14: Test transfer interruption and destination write failures.
+
+============================================================
+6. RECOMMENDED FIX ORDER
+============================================================
+
+Work in this order to avoid debugging too many layers at once:
+
+[ ] STEP 1: Fix client SOCKET return values and connect error handling.
+[ ] STEP 2: Add host connection validation and centralized cleanup.
+[ ] STEP 3: Fix menu input handling and menu option mismatches.
+[ ] STEP 4: Fix settings file NULL handling and parsing.
+[ ] STEP 5: Define and implement one TCP message-framing protocol.
+[ ] STEP 6: Implement receiving on the host and bidirectional messaging.
+[ ] STEP 7: Test disconnects, invalid input, and oversized messages.
+[ ] STEP 8: Refactor modules and headers.
+[ ] STEP 9: Implement actual binary file transfer.
+[ ] STEP 10: Test file transfer and harden error handling.
+
+============================================================
+REVIEW NOTES
+============================================================
+
+- This checklist is based on static inspection of the seven uploaded files.
+- No successful or failed compiler build was observed during this review.
+- Runtime scenarios are potential consequences inferred from the code paths,
+  not claims that the application was executed and reproduced those failures.
+- The current send_file() function sends a string/message; it does not yet
+  implement binary file transfer.
+- The current host accepts one client connection and does not implement
+  multiple-client handling.

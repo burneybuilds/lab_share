@@ -13,6 +13,7 @@ SOCKET client_session();
 int connect_to_host(SOCKET client);
 SOCKET client_side_handler(void);
 void client_side_menu();
+void banner(void);
 
 // Takes user_input to bind with the Ip / Host
 char *take_ip(void){
@@ -47,16 +48,33 @@ SOCKET client_session(){
     return TcpConnectionSocket;
 }
 
+void banner(void){
+    printf("==================Lab Share=====================\n");
+    printf("Waiting for Connection\n");
+    printf("Press 1 to Exit.\n");
+    printf("================================================\n");
+}
 
 int connect_to_host(SOCKET client){
     
     int flag = 1;
     char *serverIP;
     while(flag == 1){
+        banner();
         serverIP = take_ip();
-
+        
+        if (serverIP == 1){
+            return 0;
+        }
         if (validate_ip_address(serverIP) == 0) {
             flag = 0;
+        }
+        else{
+            printf("[-] Invalid IPv4 address. Try again, Sherlock.\n");
+            printf("Press Enter.........\n");
+            getchar();
+            getchar();
+            system("cls");
         }
     }
 
@@ -73,6 +91,9 @@ int connect_to_host(SOCKET client){
     return 0;
 }
 
+/// @brief Initializes Winsock, creates a client socket, and connects to the host.
+/// @param NULL 
+/// @return client -> SOCKET || INVALID_SOCKET.
 SOCKET client_side_handler(void)
 {
     // Let's get this thing online.
@@ -80,7 +101,7 @@ SOCKET client_side_handler(void)
     if (flag != 0)
     {
         printf("[-] Failed to initialize Winsock.\n");
-        return 1;
+        return INVALID_SOCKET;
     }
 
     // Time to make a socket. No socket, no talking.
@@ -89,26 +110,30 @@ SOCKET client_side_handler(void)
     if (client == INVALID_SOCKET){
         printf("[-] Failed to create client socket.\n");
         WSACleanup();
-        return 1;
+        return INVALID_SOCKET;
     }
 
     // Let's see if the host picks up the phone because your crush isn't picking up the call...
     int connection_flag = connect_to_host(client);
 
+    // check if the input is 0 that mean the user want to go back to the main menu.
+    // if (connection_flag == 0){
+    //     return 101;
+    // }
     // Boom, the connection failed, just like your last relationship....
     if (connection_flag == 2) {
         printf("[-] Failed to connect to the host.\n");
         closesocket(client);
         WSACleanup();
-        return 1;
+        return INVALID_SOCKET;
     }
     // Boom, you got dumb...
-    if (connection_flag == 1){
-        printf("[-] Invalid IPv4 address. Try again, Sherlock.\n");
-        closesocket(client);
-        WSACleanup();
-        return 1;
-    }
+    // if (connection_flag == 1){
+    //     printf("[-] Invalid IPv4 address. Try again, Sherlock.\n");
+    //     closesocket(client);
+    //     WSACleanup();
+    //     return INVALID_SOCKET;
+    // }
     // else{
     //     printf("[+] Successfully connected to the host!\n");
     //     getchar();
@@ -140,11 +165,14 @@ void client_side_menu()
     int user_input = 0;
     SOCKET client = client_side_handler();
 
-    if (client == INVALID_SOCKET)
+    if (client == INVALID_SOCKET)//  Something went wong....  opps just like your last relatioship. 
     {
         return;
     }
-
+    // if (client == 101){
+    //     return;
+    // }
+    system("cls");
     printf("==================Lab Share=====================\n");
     printf("1. Send Message.\n");
     printf("2. Back.\n");
@@ -168,18 +196,8 @@ void client_side_menu()
         }
         else if (user_input == 2)
         {
-            char message[1024];
-
-            int result = receive_message(client, message, sizeof(message));
-
-            if (result != 0)
-            {
-                break;
-            }
-        }
-        else if (user_input == 3)
-        {
             break;
+           
         }
     }
 

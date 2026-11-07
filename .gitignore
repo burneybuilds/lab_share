@@ -2,3 +2,4 @@
 test.c
 todo.txt
 *.o
+.vscode

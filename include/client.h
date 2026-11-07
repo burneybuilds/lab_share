@@ -10,5 +10,5 @@ SOCKET client_session(void);
 int connect_to_host(SOCKET client);
 SOCKET client_side_handler(void);
 void client_side_menu(void);
-
+void banner(void);
 #endif
