@@ -12,16 +12,23 @@ TEST_DIR = tests
 
 # ================= MAIN APPLICATION =================
 
-APP_SRC = $(SRC_DIR)/main.c $(SRC_DIR)/host.c $(SRC_DIR)/client.c $(SRC_DIR)/transfer.c
-APP_TARGET = $(BUILD_DIR)/main.exe
+APP_SRC = $(SRC_DIR)/main.c \
+          $(SRC_DIR)/host.c \
+          $(SRC_DIR)/client.c \
+          $(SRC_DIR)/transfer.c \
+          $(SRC_DIR)/utils.c
 
-# ================= TEST EXECUTABLES =================
+APP_TARGET = $(BUILD_DIR)/main
 
-CLIENT_TEST = $(BUILD_DIR)/test_client.exe
-HOST_TEST = $(BUILD_DIR)/test_host.exe
-TRANSFER_TEST = $(BUILD_DIR)/test_transfer.exe
+# ================= TEST EXECUTABLE =================
 
-TEST_TARGETS = $(CLIENT_TEST) $(HOST_TEST) $(TRANSFER_TEST)
+TEST_SRC = $(TEST_DIR)/test_host.c \
+           $(TEST_DIR)/test_client.c \
+           $(SRC_DIR)/host.c \
+           $(SRC_DIR)/client.c \
+           $(SRC_DIR)/transfer.c
+
+TEST_TARGET = $(BUILD_DIR)/tests.exe
 
 # ================= DEFAULT TARGET =================
 
@@ -31,7 +38,7 @@ all: app tests
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-# ================= BUILD MAIN APPLICATION =================
+# ================= BUILD APPLICATION =================
 
 app: $(APP_TARGET)
 
@@ -40,23 +47,15 @@ $(APP_TARGET): $(APP_SRC) | $(BUILD_DIR)
 
 # ================= BUILD TESTS =================
 
-$(CLIENT_TEST): $(TEST_DIR)/test_client.c $(SRC_DIR)/client.c $(SRC_DIR)/transfer.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+tests: $(TEST_TARGET)
 
-$(HOST_TEST): $(TEST_DIR)/test_host.c $(SRC_DIR)/host.c $(SRC_DIR)/transfer.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
-
-$(TRANSFER_TEST): $(TEST_DIR)/test_transfer.c $(SRC_DIR)/transfer.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
-
-tests: $(TEST_TARGETS)
+$(TEST_TARGET): $(TEST_SRC) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(TEST_SRC) -o $@ $(LDFLAGS)
 
 # ================= RUN TESTS =================
 
 test: tests
-	./$(CLIENT_TEST)
-	./$(HOST_TEST)
-	./$(TRANSFER_TEST)
+	./$(TEST_TARGET)
 
 # ================= RUN APPLICATION =================
 

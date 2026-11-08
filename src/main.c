@@ -5,6 +5,7 @@
 
 #include "host.h"
 #include "client.h"
+#include "utils.h"
 
 // Prototypes.
 int cli_interface_handler(void);
@@ -19,12 +20,7 @@ int cli_interface_handler(void)
     // IDK why I love clearing the screen so much. OMG...
     system("cls");
 
-    printf("===================Lab Share====================\n");
-    printf("1. Host a Session\n");
-    printf("2. Connect to a Session\n");
-    printf("3. Settings.\n");
-    printf("4. Exit.\n");
-    printf("=================================================\n");
+    main_menu();
 
     printf("<Input> ");
     // scanf("%d", &user_input);
@@ -32,9 +28,7 @@ int cli_interface_handler(void)
     // Check the input stream for any errors.
     if (scanf("%d", &user_input) != 1)
     {
-        printf("===================Error=========================\n");
-        printf("Invalid input! Please enter a number.\n");
-        printf("=================================================\n");
+        error_message();
 
         // Clear invalid input from the input buffer.
         int ch;
@@ -89,8 +83,6 @@ void settings(){
     getchar();
     
     fclose(fp);
-    // return 0;
-
 }
 
 

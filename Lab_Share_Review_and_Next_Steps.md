@@ -34,7 +34,7 @@ PRIORITY KEY
       Return INVALID_SOCKET on every failure path. Keep success paths
       returning the actual socket handle.
 
-[ ] P0-02: Standardize connect_to_host() error handling.
+[+] P0-02: Standardize connect_to_host() error handling.
     File: client.c
     Function: connect_to_host()
     Issue:

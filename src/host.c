@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
 #include "transfer.h"
+#include "utils.h"
 
-typedef struct {
+typedef struct
+{
     SOCKET client_socket;
     SOCKET listen_socket;
 } HostConnection;
@@ -24,32 +27,37 @@ void cli_options(void);
 int input_handler(int user_input);
 SOCKET accept_client(SOCKET ListenSocket);
 
-int initialize_winsock(void){
+int initialize_winsock(void)
+{
     WSADATA wsaData;
-    
+
     int wsaResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
     // Check if the output of the WSA startup is not 0 .
-    if (wsaResult != 0) {
+    if (wsaResult != 0)
+    {
         return 1;
     }
- 
+
     return 0;
 }
 
-SOCKET create_server_socket(void){
+SOCKET create_server_socket(void)
+{
     SOCKET ListenSocket = INVALID_SOCKET;
-    
+
     ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    if (ListenSocket == INVALID_SOCKET) {
+    if (ListenSocket == INVALID_SOCKET)
+    {
         return INVALID_SOCKET;
     }
-    
+
     return ListenSocket;
 }
 
-int bind_server_socket(SOCKET ListenSocket, unsigned short port){
+int bind_server_socket(SOCKET ListenSocket, unsigned short port)
+{
     struct sockaddr_in service = {0};
 
     service.sin_family = AF_INET;                // Assign the IP address type: IPv4.
@@ -58,39 +66,45 @@ int bind_server_socket(SOCKET ListenSocket, unsigned short port){
 
     int error_flag = bind(ListenSocket, (struct sockaddr *)&service, sizeof(service));
 
-    if (error_flag == SOCKET_ERROR) {
+    if (error_flag == SOCKET_ERROR)
+    {
         return 1;
     }
-    
+
     return 0;
 }
 
-int start_listening(SOCKET ListenSocket){
-    
+int start_listening(SOCKET ListenSocket)
+{
+
     int e_flag = listen(ListenSocket, SOMAXCONN);
 
-    if (e_flag == SOCKET_ERROR) {
+    if (e_flag == SOCKET_ERROR)
+    {
         return 1;
     }
 
     return 0;
 }
 
-SOCKET accept_client(SOCKET ListenSocket){
+SOCKET accept_client(SOCKET ListenSocket)
+{
     SOCKET ClientSocket;
-    
+
     ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET) {
+    if (ClientSocket == INVALID_SOCKET)
+    {
         return INVALID_SOCKET;
     }
 
     return ClientSocket;
 }
 
-HostConnection server_side_handler(void){
-    
+HostConnection server_side_handler(void)
+{
+
     // 101 = WSA Failer.
-    // 201 = Bind Failer. 
+    // 201 = Bind Failer.
     // 301 || 302 = Socket Failer.
     // 401 = Listening Failer.
 
@@ -99,78 +113,75 @@ HostConnection server_side_handler(void){
     connection.client_socket = INVALID_SOCKET;
     connection.listen_socket = INVALID_SOCKET;
 
-    int wsa_flag = initialize_winsock(); // initialize_winsock() Returns 1 if the WSA Fails.. 
-    if (wsa_flag != 0){
+    int wsa_flag = initialize_winsock(); // initialize_winsock() Returns 1 if the WSA Fails..
+    if (wsa_flag != 0)
+    {
         printf("[-] Winsock initialization failed.\n");
         return connection;
     }
 
-
     connection.listen_socket = create_server_socket();
-    if (connection.listen_socket ==  INVALID_SOCKET){
+    if (connection.listen_socket == INVALID_SOCKET)
+    {
         printf("[-] Socket creation failed.\n");
         WSACleanup();
         return connection;
     }
 
     int bind_flag = bind_server_socket(connection.listen_socket, 8080);
-    if (bind_flag != 0){
+    if (bind_flag != 0)
+    {
         printf("[-] bind failed with error.\n");
         closesocket(connection.listen_socket);
         WSACleanup();
         return connection;
     }
 
-
     int listen_flag = start_listening(connection.listen_socket);
-    if (listen_flag != 0){
+    if (listen_flag != 0)
+    {
         printf("[-] listen failed with error.\n");
         closesocket(connection.listen_socket);
         WSACleanup();
         return connection;
     }
+     
+    
+    char *ip = get_local_ip();
 
+    if (ip != NULL)
+    {
+        printf("IPv4 Address: %s\n", ip);
+    }
+    else
+    {
+        printf("[-] Could not fetch IPv4 address.\n");
+    }
     printf("[+] Host Ready..\n[/]Waiting for a connection\n");
 
     connection.client_socket = accept_client(connection.listen_socket);
-    if (connection.client_socket == INVALID_SOCKET){
+    if (connection.client_socket == INVALID_SOCKET)
+    {
         printf("[-] accept failed with error.\n");
         closesocket(connection.listen_socket);
         WSACleanup();
         return connection;
     }
-    
+
     printf("[+] Connection Establed.\n");
 
     return connection;
-    // It just closed… just like your ex did. 
-    // closesocket(client_session);
-    // closesocket(ListenSocket);
-    // WSACleanup();
-
-
-    // return 0;
 }
-
-// int validate_incoming_connection(SOCKET Listen, SOCKET accept){
-//     return 0;
-// }
 
 // Generate a 4 Digits Random Code.
-int code_generator(void){    
+int code_generator(void)
+{
     int number = 1000 + rand() % 9000;
-    return number ;
+    return number;
 }
 
-void cli_options(void){
-    printf("==================Lab Share=====================\n");
-    printf("1. Send File. \n");
-    printf("2. Back. \n");
-    printf("================================================\n");
-}
-
-
-int input_handler(int user_input){        
+int input_handler(int user_input)
+{
     if (user_input < 1 || user_input > 3)
     {
         // Clear invalid input from the input buffer.
@@ -180,88 +191,68 @@ int input_handler(int user_input){
         // This loop runs until a newline or EOF is encountered, clearing the remaining input.
         while ((ch = getchar()) != '\n' && ch != EOF)
         {
-            // its empty..  i know i know 
+            // its empty..  i know i know
         }
         return 1;
     }
     return 0;
 }
 
+void host_menu_handler(void)
+{
 
-void host_menu_handler(void){
-   
     int user_input = 0;
     int room_code = code_generator();
-    // cli_options();
-    printf("==================Lab Share=====================\n");
-    printf("Waiting for Connection\n");
-    printf("================================================\n");
-    printf("IPV4 Addre: \n");
+
+    waiting_for_connection();
     printf("Room Code: %d\n", room_code);
     HostConnection connection = server_side_handler();
+   
+    // printf("IPV4 Addre: \n");
+    
+    
+
+    if (connection.client_socket == INVALID_SOCKET)
+    {
+        printf("Opps Something went wrong.\n");
+        printf("Press Enter to continue.\n");
+        getchar();
+        getchar();
+        return;
+    }
+
     system("cls");
     cli_options();
-    // if (connection == INVALID_SOCKET)
-    // {
-    //     printf("[-] Connection initialization failed.\n");
-    //     return;
-    // }
+
     do
     {
-        
+
         printf("<input> ");
         scanf("%d", &user_input);
 
         // Check the input stream for any errors.
-        if ((input_handler(user_input)) == 1){
-            printf("===================Error=========================\n");
-            printf("Invalid input! Please enter a number.\n");
-            printf("=================================================\n");
-        }
- 
-        if (user_input == 1)
+        if ((input_handler(user_input)) == 1)
         {
-            // send_file();
-            // char *path = file_selecter(1);
-
-            // if (path != NULL)
-            // {
-            //     printf("File selected: %s\n", path);
-
-            //     // Next step: pass the path to your file-transfer function.
-            //     send_file(path);
-
-            //     free(path);
-            // }
-            // else
-            // {
-            //     printf("File selection cancelled or failed.\n");
-                
-            // }
-                    
-            char message[1024];
-
-            printf("You: ");
-            fgets(message, sizeof(message), stdin);
-
-            // Remove the newline added by fgets
-            message[strcspn(message, "\n")] = '\0';
-
-            send_file(connection.client_socket , message);
-
+            error_message();
         }
-        else if (user_input == 2)
+
+        if (user_input != 1)
         {
-            printf("Waiting for the file......\n");
-            // Next step: implement file receiving.
-        }
-        else if (user_input != 3)
-        {
-            printf("Invalid option. Please choose 1, 2, or 3.\n");
+            error_message();
         }
 
-    } while (user_input != 3);
-    
+        char message[1024];
+
+        printf("You: ");
+        fgets(message, sizeof(message), stdin);
+
+        // Remove the newline added by fgets
+        message[strcspn(message, "\n")] = '\0';
+
+        send_file(connection.client_socket, message);
+
+    } while (user_input != 2);
+
     // Close sockets only when the user exits.
     printf("[+] Closing connection...\n");
 
@@ -269,5 +260,5 @@ void host_menu_handler(void){
     closesocket(connection.listen_socket);
 
     WSACleanup();
-    return ;
+    return;
 }

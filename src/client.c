@@ -4,91 +4,141 @@
 
 #include "client.h"
 #include "transfer.h"   
-
+#include "utils.h"
 // Prototypes.
+int initialize_winsock_client(void);
 char *take_ip(void);
 int validate_ip_address(const char *ip);
-int initialize_winsock_client(void);
 SOCKET client_session();
-int connect_to_host(SOCKET client);
+int connect_to_host(SOCKET client,  char *serverIP);
 SOCKET client_side_handler(void);
 void client_side_menu();
-void banner(void);
+char *get_host_ip(void);
 
-// Takes user_input to bind with the Ip / Host
-char *take_ip(void){
-    static char arr[16];
-    printf("Enter the Host IP:  ");
-    scanf("%15s", arr);
-    return arr;
-}
 
-int initialize_winsock_client(void){
+
+/// @brief Initializes Winsock so the client can use network functions.
+/// @param None
+/// @return 0 if Winsock is initialized successfully, 1 if initialization fails.
+int initialize_winsock_client(void)
+{
     WSADATA wsaData;
-    
+
+    // Start Winsock version 2.2.
     int wsaResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    // Check if the output of the WSA startup is not 0 .
+    // Check if Winsock started successfully.
     if (wsaResult != 0) {
         return 1;
     }
- 
+
+    // Winsock is ready to use.
     return 0;
 }
 
-SOCKET client_session(){
-    // Creates a socket.
-    SOCKET TcpConnectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+/// @brief Creates a TCP socket for the client to connect to a server.
+/// @param None
+/// @return The created socket if successful, INVALID_SOCKET if creation fails.
+SOCKET client_session(void)
+{
+    // Create a TCP socket using IPv4.
+    // AF_INET      -> Uses IPv4 addressing.
+    // SOCK_STREAM  -> Uses TCP (reliable, connection-based communication).
+    // IPPROTO_TCP  -> Specifies the TCP protocol.
+    SOCKET TcpConnectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // Returns -> INVALID_SOCKET -> IF Failed..
 
-    // checks if the socket is inalid and return.
-    if (TcpConnectionSocket == INVALID_SOCKET){
+    // Check if the socket was created successfully.
+    if (TcpConnectionSocket == INVALID_SOCKET) {
         return INVALID_SOCKET;
     }
-    
+
+    // Return the socket so it can be used for connection.
     return TcpConnectionSocket;
 }
 
-void banner(void){
-    printf("==================Lab Share=====================\n");
-    printf("Waiting for Connection\n");
-    printf("Press 1 to Exit.\n");
-    printf("================================================\n");
+
+/// @brief Takes the host's IPv4 address as input from the user.
+/// @param None
+/// @return A pointer to the first character of the stored IP address.
+char *take_ip(void)
+{
+    static char arr[16];
+
+    printf("Enter the Host IP:  ");
+
+    scanf("%15s", arr);
+
+    return arr; // This is Returning a pointer to the first character of the array.
 }
 
-int connect_to_host(SOCKET client){
-    
-    int flag = 1;
-    char *serverIP;
-    while(flag == 1){
-        banner();
-        serverIP = take_ip();
-        
-        if (serverIP == 1){
-            return 0;
-        }
-        if (validate_ip_address(serverIP) == 0) {
-            flag = 0;
-        }
-        else{
-            printf("[-] Invalid IPv4 address. Try again, Sherlock.\n");
-            printf("Press Enter.........\n");
-            getchar();
-            getchar();
-            system("cls");
-        }
+/// @brief Checks whether the given IP address is a valid IPv4 address.
+/// @param ip The IPv4 address string to validate.
+/// @return 0 if the IP address is valid, 1 if it is invalid.
+int validate_ip_address(const char *ip)
+{
+    struct in_addr address;
+
+    // Convert the IP address from string format to binary format.
+    int flag = inet_pton(AF_INET, ip, &address);
+
+    // Check if the conversion failed or the IP address is invalid.
+    if (flag != 1) {
+        return 1;
     }
 
-    struct sockaddr_in serverAddress = {0};   // Initialize the server's socket address structure.
-    serverAddress.sin_family = AF_INET;       // Specify the IPv4 address family.
-    serverAddress.sin_port = htons(8080);     // Set the destination port to 8080.
-    inet_pton(AF_INET, serverIP, &serverAddress.sin_addr);
-    
-    int connection_pool = connect(client, (SOCKADDR *)&serverAddress, sizeof(serverAddress));
-    if (connection_pool == SOCKET_ERROR){
-        return connection_pool;
-    }
-
+    // IP address is valid.
     return 0;
+}
+
+/// @brief Takes a valid IPv4 address from the user.
+/// @param None
+/// @return 0 when a valid IP is entered, 1 when the user chooses to exit.
+char *get_host_ip(void)
+{
+    while (true)
+    {
+        waiting_for_connection();
+        char *serverIP = take_ip();
+
+        if (strcmp(serverIP, "1") == 0)
+        {
+            return NULL;
+        }
+
+        if (validate_ip_address(serverIP) == 0)
+        {
+            return serverIP;
+        }
+
+        printf("[-] Invalid IPv4 address. Try again, Sherlock.\n");
+        printf("Press Enter.........\n");
+        getchar();
+        getchar();
+        system("cls");
+    }
+}
+
+/// @brief Establishes a TCP connection with the specified host.
+/// @param client The client's socket.
+/// @param serverIP The IPv4 address of the host.
+/// @return 0 on success, SOCKET_ERROR on connection failure.
+int connect_to_host(SOCKET client, char *serverIP)
+{
+    struct sockaddr_in serverAddress = {0};
+
+    serverAddress.sin_family = AF_INET;   // Set the address family to IPv4.
+    serverAddress.sin_port = htons(8080); // Set the host's port number to 8080.
+    inet_pton(AF_INET, serverIP, &serverAddress.sin_addr); // Convert the IP address from string format to binary format.
+
+    // Attempt to connect to the host.
+    int connection_pool = connect(client, (SOCKADDR *)&serverAddress, sizeof(serverAddress));
+
+    if (connection_pool == SOCKET_ERROR)
+    {
+        return SOCKET_ERROR;
+    }
+
+    return connection_pool;
 }
 
 /// @brief Initializes Winsock, creates a client socket, and connects to the host.
@@ -112,74 +162,56 @@ SOCKET client_side_handler(void)
         WSACleanup();
         return INVALID_SOCKET;
     }
+    char *serverIP = get_host_ip();
 
-    // Let's see if the host picks up the phone because your crush isn't picking up the call...
-    int connection_flag = connect_to_host(client);
+    if (serverIP == NULL)
+    {
+        closesocket(client);
+        WSACleanup();
+        return INVALID_SOCKET;  
+    }
 
-    // check if the input is 0 that mean the user want to go back to the main menu.
-    // if (connection_flag == 0){
-    //     return 101;
-    // }
-    // Boom, the connection failed, just like your last relationship....
-    if (connection_flag == 2) {
+     // Let's see if the host picks up the phone because your crush isn't picking up the call...
+    int connection_flag = connect_to_host(client, serverIP);
+    if (connection_flag == SOCKET_ERROR) {
         printf("[-] Failed to connect to the host.\n");
         closesocket(client);
         WSACleanup();
         return INVALID_SOCKET;
-    }
-    // Boom, you got dumb...
-    // if (connection_flag == 1){
-    //     printf("[-] Invalid IPv4 address. Try again, Sherlock.\n");
-    //     closesocket(client);
-    //     WSACleanup();
-    //     return INVALID_SOCKET;
-    // }
-    // else{
-    //     printf("[+] Successfully connected to the host!\n");
-    //     getchar();
-    //     getchar();
-    // }
-
-    // If you're wondering why 2 comes before 1, the answer is honestly, I don't know.....
-    // getchar();
-    // getchar()
+    }   
     return client; 
 }
 
-int validate_ip_address(const char *ip)
-{
-    struct in_addr address;
-
-    int flag = inet_pton(AF_INET, ip, &address);
-
-    if (flag != 1) {
-        return 1; // Invalid IP. Don't worry, this isn't a red flag like your ex.
-    }
-
-    return 0; // Valid IP. Green flag!
-}
 
 
-void client_side_menu()
+/// @brief Handles the client-side menu and user interactions.
+void client_side_menu(void)
 {
     int user_input = 0;
+
+    // Initialize the client and establish a connection with the host.
     SOCKET client = client_side_handler();
 
-    if (client == INVALID_SOCKET)//  Something went wong....  opps just like your last relatioship. 
+    // Check if the client socket creation or connection failed.
+    if (client == INVALID_SOCKET)
     {
         return;
     }
-    // if (client == 101){
-    //     return;
-    // }
-    system("cls");
-    printf("==================Lab Share=====================\n");
-    printf("1. Send Message.\n");
-    printf("2. Back.\n");
-    printf("================================================\n");
 
+    // Check if the user chose to exit.
+    if (client == 101)
+    {
+        return;
+    }
+
+    // Clear the terminal and display the client menu.
+    system("cls");
+    cli_options();
+
+    // Keep displaying the menu until the user chooses to go back.
     while (user_input != 3)
     {
+        // Get the user's menu choice.
         printf("<Input> ");
         scanf("%d", &user_input);
 
@@ -187,20 +219,22 @@ void client_side_menu()
         {
             char message[1024];
 
-            getchar(); // Clear leftover newline
+            // Clear the leftover newline from scanf.
+            getchar();
 
+            // Take the message from the user.
             printf("You: ");
             fgets(message, sizeof(message), stdin);
 
+            // Send the message to the connected host.
             send_file(client, message);
         }
         else if (user_input == 2)
         {
-            break;
-           
+            break; // Exit the menu and return to the Main Menu.
         }
     }
 
-    closesocket(client);
-    WSACleanup();
+    closesocket(client);         // Close the client socket.
+    WSACleanup();                // Clean up Winsock resources.
 }
