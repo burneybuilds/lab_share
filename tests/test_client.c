@@ -6,8 +6,10 @@
 
 #include "client.h"
 
+void test_host_tests(void);
+
 // Test 1: IP validation
-void test_validate_ip_address(void)
+static void test_validate_ip_address(void)
 {
     printf("\n[TEST] IP Validation\n");
 
@@ -22,7 +24,7 @@ void test_validate_ip_address(void)
 }
 
 // Test 2: Winsock initialization
-void test_initialize_winsock(void)
+static void test_initialize_winsock(void)
 {
     printf("\n[TEST] Winsock Initialization\n");
 
@@ -34,7 +36,7 @@ void test_initialize_winsock(void)
 }
 
 // Test 3: Socket creation
-void test_client_session(void)
+static void test_client_session(void)
 {
     printf("\n[TEST] Client Socket Creation\n");
 
@@ -51,6 +53,7 @@ int main(void)
 {
     printf("========== LabShare Tests ==========\n");
 
+    test_host_tests();
     test_validate_ip_address();
 
     test_initialize_winsock();

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 

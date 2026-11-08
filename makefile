@@ -26,7 +26,8 @@ TEST_SRC = $(TEST_DIR)/test_host.c \
            $(TEST_DIR)/test_client.c \
            $(SRC_DIR)/host.c \
            $(SRC_DIR)/client.c \
-           $(SRC_DIR)/transfer.c
+           $(SRC_DIR)/transfer.c \
+           $(SRC_DIR)/utils.c
 
 TEST_TARGET = $(BUILD_DIR)/tests.exe
 

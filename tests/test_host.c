@@ -11,9 +11,10 @@ static void test_bind_server_socket(void);
 static void test_start_listening(void);
 static void test_accept_client(void);
 static void test_code_generator(void);
+void test_host_tests(void);
 
 // Test Winsock initialization.
-void test_initialize_winsock(void)
+static void test_initialize_winsock(void)
 {
     int result = initialize_winsock();
 
@@ -23,7 +24,7 @@ void test_initialize_winsock(void)
 }
 
 // Test socket creation.
-void test_create_server_socket(void)
+static void test_create_server_socket(void)
 {
     SOCKET server_socket = create_server_socket();
 
@@ -35,7 +36,7 @@ void test_create_server_socket(void)
 }
 
 // Test socket binding.
-void test_bind_server_socket(void)
+static void test_bind_server_socket(void)
 {
     SOCKET server_socket = create_server_socket();
 
@@ -57,7 +58,7 @@ void test_bind_server_socket(void)
 }
 
 // Test listening.
-void test_start_listening(void)
+static void test_start_listening(void)
 {
     SOCKET server_socket = create_server_socket();
 
@@ -81,7 +82,7 @@ void test_start_listening(void)
 }
 
 // Test accepting clients.
-void test_accept_client(void)
+static void test_accept_client(void)
 {
     SOCKET client_socket = accept_client(INVALID_SOCKET);
 
@@ -91,7 +92,7 @@ void test_accept_client(void)
 }
 
 // Test room code generation.
-void test_code_generator(void)
+static void test_code_generator(void)
 {
     for (int i = 0; i < 1000; i++)
     {
@@ -104,7 +105,7 @@ void test_code_generator(void)
     printf("[PASS] Room code generation\n");
 }
 
-int test_client()
+void test_host_tests(void)
 {
     printf("\n========== HOST TESTS ==========\n");
 
@@ -120,5 +121,5 @@ int test_client()
 
     printf("\n[+] All host tests passed.\n");
 
-    return 0;
+    return;
 }

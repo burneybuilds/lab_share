@@ -113,13 +113,6 @@ HostConnection server_side_handler(void)
     connection.client_socket = INVALID_SOCKET;
     connection.listen_socket = INVALID_SOCKET;
 
-    int wsa_flag = initialize_winsock(); // initialize_winsock() Returns 1 if the WSA Fails..
-    if (wsa_flag != 0)
-    {
-        printf("[-] Winsock initialization failed.\n");
-        return connection;
-    }
-
     connection.listen_socket = create_server_socket();
     if (connection.listen_socket == INVALID_SOCKET)
     {
@@ -205,6 +198,7 @@ void host_menu_handler(void)
     int room_code = code_generator();
 
     waiting_for_connection();
+
     printf("Room Code: %d\n", room_code);
     HostConnection connection = server_side_handler();
    
