@@ -7,4 +7,6 @@ void main_menu(void);
 void error_message(void);
 char *get_local_ip(void);
 int code_generator(void);
+char *file_selecter(int user_input);
+
 #endif

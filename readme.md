@@ -1,145 +1,205 @@
 # Lab Share
 
-**Simple, peer-to-peer file sharing for computers on the same local network.**
+Lab Share is a Windows command-line application written in C for
+experimenting with peer-to-peer communication over a local network. A
+host listens for one TCP client, and a client connects using the host's
+IPv4 address.
 
-Lab Share is a command-line file-sharing application written in C that aims to make transferring files between computers on a local area network (LAN) simple and convenient. No accounts, no cloud uploads, and no third-party file-sharing services required.
+> **Current status:** Lab Share is an early networking prototype. The
+> current code establishes TCP connections and sends short text
+> messages. Despite the `send_file` function name and menu label, file
+> contents are not transferred yet.
 
-## About the Project
+## What works today
 
-As a college student, I've often needed to transfer files between computers in college labs. I started wondering: why should we rely on applications like WhatsApp or Gmail just to share a file with someone sitting on the same local network?
+- Host-side Winsock initialization and TCP socket setup.
+- Binding to all local IPv4 interfaces on port `8080`.
+- Waiting for and accepting one client connection.
+- Client-side IPv4 input and validation with `inet_pton`.
+- Connecting to a host by IPv4 address.
+- Sending text entered in the host or client menu.
+- Displaying the values in `config/settings.txt`.
+- Windows file-selection dialog code for future file-transfer work.
 
-That question inspired me to build **Lab Share** — a lightweight file-sharing application designed to transfer files directly between computers on the same LAN.
+The host and client currently close their sockets after leaving their
+menus. Network discovery, persistent multi-client sessions, file-byte
+transfer, transfer progress, and receiving/saving files are not
+implemented.
 
-The project is built using C and Windows Sockets (Winsock2), with a command-line interface (CLI). My current focus is implementing the core file-transfer functionality and making it reliable and easy to use.
+## Requirements
 
-### Project Goals
+- Windows
+- [MSYS2](https://www.msys2.org/)
+- GCC from the MSYS2 UCRT64 environment
+- GNU Make
+- Git
 
-- **Direct file transfers:** Transfer files between computers on the same local network.
-- **No accounts required:** Keep the sharing process simple without requiring user registration.
-- **No third-party uploads:** Transfer files directly between devices instead of relying on cloud services.
-- **Lightweight and practical:** Build a simple application that works through a command-line interface.
-- **Learn by building:** Use a real-world project to develop a deeper understanding of C programming and computer networking.
+Install the compiler and build tools from an **MSYS2 UCRT64** terminal:
 
-## Current Status
+```bash
+pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make
+```
 
-Lab Share is currently under development, with a focus on implementing the basic LAN file-transfer functionality.
+Verify the tools:
 
-### Planned Features
+```bash
+gcc --version
+make --version
+```
 
-- [ ] UDP-based local network discovery.
-- [ ] QR code-based file sharing.
-- [ ] Browser-based file downloads over HTTP.
-- [ ] Linux and macOS support.
-- [ ] Additional improvements to reliability and usability.
+## Build
 
-These features are planned for future development and are not necessarily available in the current version.
-
-## Getting Started
-
-### Prerequisites
-
-Before building Lab Share, make sure you have the following installed:
-
-- **Operating system:** Windows
-- **Compiler:** GCC (MinGW-w64)
-- **Build system:** GNU Make
-
-### 1. Clone the Repository
-
-Clone the repository and navigate to the project directory:
+Clone the repository and enter its root directory:
 
 ```bash
 git clone <repository-url>
-cd LabShare
+cd lab_share
 ```
 
-Replace `<repository-url>` with the actual URL of your Git repository.
-
-### 2. Build the Application
-
-Run the following command from the project directory:
+Build the application and test executable:
 
 ```bash
 make
 ```
 
-This uses the project's Makefile to compile the source files and generate the executable.
+The build produces:
 
-### 3. Run Lab Share
+- `build/main.exe` — the interactive application.
+- `build/tests.exe` — the test executable.
 
-Launch the application using:
+To build only one target:
+
+```bash
+make app
+make tests
+```
+
+## Run
+
+Start the application from the repository root:
 
 ```bash
 ./build/main.exe
 ```
 
-**Note:** Make sure the build completes successfully before running the executable.
+The main menu provides:
 
-For detailed installation instructions, troubleshooting tips, and setup information, see the [Setup Guide](docs/setup.md).
+1. **Host a Session** — starts a TCP listener on port `8080`, prints a
+   local IPv4 address and waits for one client.
+2. **Connect to a Session** — asks for the host's IPv4 address and
+   connects to port `8080`.
+3. **Settings** — reads the values in `config/settings.txt`.
+4. **Exit** — closes the application.
 
-## Project Structure
+For a local connection test, run one instance as the host and connect
+from another instance using `127.0.0.1`. For two computers on the same
+LAN, enter the host's reachable local IPv4 address. Windows Firewall may
+need an inbound rule allowing TCP traffic on port `8080`.
 
-```text
-LabShare/
-├── include/              # Header files containing function declarations
-│   ├── client.h          # Client functionality
-│   ├── host.h            # Host functionality
-│   └── transfer.h        # File-transfer functionality
-├── src/
-│   ├── main.c            # Application entry point and CLI menu
-│   ├── client.c          # Handles connections to a host
-│   ├── host.c             # Handles hosting and incoming connections
-│   └── transfer.c        # Handles file-transfer operations
-├── build/
-│   └── main.exe          # Compiled application executable
-├── makefile              # Build instructions
-├── settings.text         # Application configuration settings
-├── docs/
-│   └── setup.md          # Installation and setup guide
-└── README.md             # Project documentation
+The current session menu sends text input. It does not select, upload,
+download, or save a file.
+
+## Test
+
+Run the Windows socket and validation tests with:
+
+```bash
+make test
 ```
 
-## Technology Stack
+The tests cover Winsock initialization, socket creation, binding,
+listening, invalid client acceptance, room-code generation, IPv4
+validation, and client socket creation.
 
-| Component | Technology |
+Remove generated build output with:
+
+```bash
+make clean
+```
+
+## Configuration
+
+The sample configuration is stored in
+[config/settings.txt](config/settings.txt):
+
+```text
+username=Tushar
+port=8080
+connection_timeout=5
+max_connections=1
+```
+
+The host and client networking code currently use the hard-coded port
+`8080`; the other settings are displayed but are not yet used to control
+network behavior. The settings reader expects its relative path
+`../config/settings.txt`, so the Settings menu may not find the file
+when the executable is launched from the repository root.
+
+## Project layout
+
+```text
+lab_share/
+├── include/                  # Public header declarations
+│   ├── client.h
+│   ├── host.h
+│   ├── transfer.h
+│   ├── utils.h
+│   └── validate.h
+├── src/
+│   ├── main.c                # Main menu and settings display
+│   ├── host.c                # TCP server setup and host menu
+│   ├── client.c              # TCP client setup and client menu
+│   ├── transfer.c            # Current text send/receive helpers
+│   ├── utils.c               # Menus, local IP lookup, file dialog, room code
+│   └── validate.c             # Input and IPv4 validation
+├── tests/
+│   ├── test_host.c
+│   └── test_client.c
+├── config/settings.txt       # Sample settings values
+├── docs/
+│   ├── architecture.md       # Component and lifecycle notes
+│   ├── networking.md         # Winsock/TCP details
+│   └── setup.md              # Windows setup guide
+├── makefile                  # Application and test build targets
+└── readme.md                 # Project documentation
+```
+
+## Technical overview
+
+Lab Share uses:
+
+| Area | Current implementation |
 |---|---|
-| Programming Language | C |
-| Compiler | GCC (MinGW-w64) |
+| Language | C |
+| Platform | Windows |
 | Networking API | Winsock2 |
-| File Transfer Protocol | TCP |
-| Network Discovery | UDP (planned) |
-| Browser-Based Sharing | HTTP (planned) |
-| Build System | GNU Make |
-| Current Platform | Windows |
-| Planned Platforms | Linux and macOS |
+| Addressing | IPv4 |
+| Transport | TCP |
+| Port | `8080` |
+| Build system | GNU Make |
+| Link libraries | `ws2_32`, `comdlg32` |
 
-## Learning Objectives
+The host calls `WSAStartup`, creates an IPv4 TCP socket, binds it to
+`INADDR_ANY:8080`, listens, and accepts one client. The client starts
+Winsock, creates a socket, validates the entered IPv4 address, and calls
+`connect` on port `8080`. Both sides use a menu after connection and
+clean up their sockets with `closesocket` and `WSACleanup`.
 
-Lab Share is also a hands-on learning project focused on understanding how low-level networking works in practice.
+See the [setup guide](docs/setup.md), [architecture notes](docs/architecture.md),
+and [networking notes](docs/networking.md) for more detail.
 
-Through this project, I'm exploring:
+## Roadmap
 
-- TCP socket programming in C.
-- Client-server communication.
-- File handling and binary data transfer.
-- Network connections and error handling.
-- Building and organizing multi-file C projects using Make.
-- Designing a foundation for future features such as network discovery and browser-based sharing.
+Planned work includes:
 
-## A Note on AI-Assisted Development
+- Keep the connection alive for a complete session lifecycle.
+- Define a framed message and file-transfer protocol.
+- Implement reliable file sending and receiving.
+- Add transfer progress and disconnection handling.
+- Add local-network discovery.
+- Decide whether to support multiple clients.
+- Add Linux and macOS support.
 
-Lab Share is a learning project developed with the help of AI tools for guidance, debugging, and problem-solving.
-
-Most of the code is written by me, and I use AI as a learning aid rather than simply copying solutions. My goal is to understand the code I write, learn from mistakes, and strengthen my knowledge of C programming and computer networking by building something practical.
-
-## Feedback & Contributions
-
-I'm always open to feedback, constructive criticism, and suggestions for improvement.
-
-If you have ideas for new features, spot a potential issue, or want to discuss the project, feel free to reach out via email or LinkedIn.
-
-I'm excited to keep learning, improving Lab Share, and collaborating with others who share an interest in C programming and networking.
-
----
-
-**Lab Share — Learning networking by building something useful.**
+Lab Share is a learning project focused on understanding C,
+socket programming, resource ownership, and network protocols. Feedback
+and constructive suggestions are welcome.
