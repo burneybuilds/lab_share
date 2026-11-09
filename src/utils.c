@@ -7,6 +7,8 @@ void waiting_for_connection(void);
 void main_menu(void);
 void error_message(void);
 char *get_local_ip(void);
+int code_generator(void);
+
 void cli_options(void){
     printf("==================Lab Share=====================\n");
     printf("1. Send File. \n");
@@ -33,6 +35,7 @@ void main_menu(void){
 void error_message(void){
     printf("===================Error=========================\n");
     printf("Invalid input! Please enter a number.\n");
+    printf("Press Enter to Continue...\n");
     printf("=================================================\n");
 }
 
@@ -73,4 +76,12 @@ char *get_local_ip(void)
 
     freeaddrinfo(result);
     return NULL;
+}
+
+
+// Generate a 4 Digits Random Code.
+int code_generator(void)
+{
+    int number = 1000 + rand() % 9000;
+    return number;
 }

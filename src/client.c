@@ -6,16 +6,17 @@
 #include "client.h"
 #include "transfer.h"   
 #include "utils.h"
+#include "validate.h"
+
+
 // Prototypes.
 int initialize_winsock_client(void);
 char *take_ip(void);
-int validate_ip_address(const char *ip);
 SOCKET client_session();
 int connect_to_host(SOCKET client,  char *serverIP);
 SOCKET client_side_handler(void);
 void client_side_menu();
 char *get_host_ip(void);
-
 
 
 /// @brief Initializes Winsock so the client can use network functions.
@@ -72,24 +73,6 @@ char *take_ip(void)
     return arr; // This is Returning a pointer to the first character of the array.
 }
 
-/// @brief Checks whether the given IP address is a valid IPv4 address.
-/// @param ip The IPv4 address string to validate.
-/// @return 0 if the IP address is valid, 1 if it is invalid.
-int validate_ip_address(const char *ip)
-{
-    struct in_addr address;
-
-    // Convert the IP address from string format to binary format.
-    int flag = inet_pton(AF_INET, ip, &address);
-
-    // Check if the conversion failed or the IP address is invalid.
-    if (flag != 1) {
-        return 1;
-    }
-
-    // IP address is valid.
-    return 0;
-}
 
 /// @brief Takes a valid IPv4 address from the user.
 /// @param None

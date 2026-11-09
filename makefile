@@ -16,7 +16,8 @@ APP_SRC = $(SRC_DIR)/main.c \
           $(SRC_DIR)/host.c \
           $(SRC_DIR)/client.c \
           $(SRC_DIR)/transfer.c \
-          $(SRC_DIR)/utils.c
+          $(SRC_DIR)/utils.c \
+          $(SRC_DIR)/validate.c
 
 APP_TARGET = $(BUILD_DIR)/main
 

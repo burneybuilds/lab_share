@@ -1,0 +1,80 @@
+LAB SHARE - TODO / BUG TRACKER
+================================
+
+[P0 - CRITICAL BUGS]
+
+[+] P0-01: Stop execution after invalid menu input
+    File: src/host.c
+    Function: host_menu_handler()
+    Issue: Program displays an error but continues executing the selected action.
+    Fix: Use continue after detecting invalid input.
+
+[+] P0-02: Handle exit option correctly
+    File: src/host.c
+    Function: host_menu_handler()
+    Issue: Option 2 reaches the else block and displays an error.
+    Fix: Handle option 2 separately.
+
+[+] P0-03: Handle non-numeric menu input
+    File: src/host.c
+    Function: host_menu_handler()
+    Issue: scanf() can repeatedly fail when the user enters non-numeric input.
+    Fix: Check scanf() return value and clear invalid input.
+
+
+[P1 - IMPORTANT BUGS]
+
+[ ] P1-01: Fix scanf() and fgets() input conflict
+    File: src/host.c
+    Function: host_menu_handler()
+    Issue: Newline left by scanf() can cause fgets() to read an empty line.
+    Fix: Consume the remaining newline before reading the message.
+
+[ ] P1-02: Handle long message input
+    File: src/host.c
+    Function: host_menu_handler()
+    Issue: Long messages can leave extra characters in the input stream.
+    Fix: Detect and clear remaining input.
+
+[ ] P1-03: Improve connection failure handling
+    File: src/host.c
+    Function: server_side_handler()
+    Issue: Generic error messages make socket failures difficult to debug.
+    Fix: Display WSAGetLastError() after failed Winsock operations.
+
+[ ] P1-04: Improve connection failure pause
+    File: src/host.c
+    Function: host_menu_handler()
+    Issue: Using two getchar() calls can cause inconsistent pause behaviour.
+    Fix: Handle the input buffer consistently before waiting for Enter.
+
+
+[P2 - IMPROVEMENTS / FEATURES]
+
+[ ] P2-01: Implement room code verification
+    File: src/host.c, src/client.c
+    Issue: Room code is generated and displayed but isn't used to verify clients.
+    Fix: Send the room code to the client and validate it before accepting the session.
+
+[ ] P2-02: Make internal functions static
+    File: src/host.c
+    Issue: Internal functions are exposed outside the file unnecessarily.
+    Fix: Add static to functions only used inside host.c.
+
+[ ] P2-03: Check file/message transfer results
+    File: src/host.c, src/transfer.c
+    Issue: Transfer failures should be handled by the calling function.
+    Fix: Check the return value of send_file() if its function signature supports status reporting.
+
+[ ] P2-04: Improve error messages
+    File: src/host.c, src/client.c
+    Issue: Some errors don't explain which operation failed.
+    Fix: Add clear messages for socket creation, binding, listening, accepting, and transfer failures.
+
+
+================================
+PRIORITY ORDER
+================================
+1. Fix all P0 bugs.
+2. Fix all P1 bugs.
+3. Work on P2 improvements and features.

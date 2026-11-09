@@ -6,6 +6,7 @@
 #include "host.h"
 #include "client.h"
 #include "utils.h"
+#include "validate.h"
 
 // Prototypes.
 int cli_interface_handler(void);
@@ -17,29 +18,18 @@ int cli_interface_handler(void)
 {
     int user_input = 0;
 
-    // IDK why I love clearing the screen so much. OMG...
-    system("cls");
+    system("cls"); // IDK why I love clearing the screen so much. OMG...
 
-    main_menu();
+    main_menu(); // This just prints the main menu, you can find it in the untils file.
 
     printf("<Input> ");
-    // scanf("%d", &user_input);
+    scanf("%d", &user_input);
 
     // Check the input stream for any errors.
-    if (scanf("%d", &user_input) != 1)
-    {
+    int error_flag = input_validater(user_input);
+    if (error_flag == 1){
         error_message();
-
-        // Clear invalid input from the input buffer.
-        int ch;
-
-        // getchar() reads a character from the input stream and returns its integer value (ASCII value on ASCII-compatible systems).
-        // This loop runs until a newline or EOF is encountered, clearing the remaining input.
-        while ((ch = getchar()) != '\n' && ch != EOF)
-        {
-        }
-
-        return 0;
+        getchar();
     }
 
     // If everything goes right (which might not always be the case), return the user's input.
@@ -119,9 +109,7 @@ int main(void){
             case 4:
                 printf("Have a great day.");
                 return 0;
-            default:
-                // printf("Invalid Input. ");
-                // system("cls");    
+            default:   
                 break;
         }
     }

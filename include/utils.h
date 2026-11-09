@@ -6,5 +6,5 @@ void waiting_for_connection(void);
 void main_menu(void);
 void error_message(void);
 char *get_local_ip(void);
-
+int code_generator(void);
 #endif
