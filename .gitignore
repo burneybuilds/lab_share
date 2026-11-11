@@ -3,3 +3,5 @@ test.c
 todo.txt
 *.o
 .vscode
+test_rev.c
+test_sen.c

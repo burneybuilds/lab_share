@@ -3,6 +3,8 @@
 #include <string.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <process.h>
+#include <windows.h>
 
 #include "transfer.h"
 #include "utils.h"
@@ -22,7 +24,7 @@ int start_listening(SOCKET ListenSocket);
 SOCKET accept_client(SOCKET ListenSocket);
 
 HostConnection server_side_handler(void);
-
+unsigned int __stdcall receive_handler(void *arg);
 void host_menu_handler(void);
 
 // Start the Winsock library so the program can use Windows socket functions.
@@ -234,6 +236,30 @@ HostConnection server_side_handler(void)
 }
 
 
+unsigned int __stdcall receive_handler(void *arg)
+{
+    SOCKET client_socket = *(SOCKET *)arg;
+    char buffer[1024];
+
+    while (1)
+    {
+        int result = receive_message(
+            client_socket,
+            buffer,
+            sizeof(buffer)
+        );
+
+        // Stop receiving if an error or disconnection occurs.
+        if (result != 0)
+        {
+            break;
+        }
+    }
+
+    return 0;
+}
+
+
 // Handles the host-side menu and user interactions after starting the server.
 // Establishes a connection with a client and allows the host to send messages.
 void host_menu_handler(void)
@@ -241,39 +267,70 @@ void host_menu_handler(void)
     // Stores the user's menu selection.
     int user_input = 0;
 
-    // Generates a unique room code that can be displayed to the client.
+    // Generates a unique room code.
     int room_code = code_generator();
 
-    // Display the waiting screen while preparing for a client connection.
     waiting_for_connection();
 
-    // Display the room code so the client can identify the host's session.
     printf("Room Code: %d\n", room_code);
 
-    // Initialize the server and wait for an incoming client connection.
+    // Initialize the server and wait for a client.
     HostConnection connection = server_side_handler();
 
-    // Check whether the client connection was established successfully.
     if (connection.client_socket == INVALID_SOCKET)
     {
-        printf("Opps Something went wrong.\n");
+        printf("Oops! Something went wrong.\n");
         printf("Press Enter to continue.\n");
         getchar();
         getchar();
         return;
     }
 
+    // Start the receiver thread.
+    unsigned int thread_id;
 
-    // Keep displaying the menu until the user chooses to exit.
+    HANDLE receiver_thread = (HANDLE)_beginthreadex(
+        NULL,
+        0,
+        receive_handler,
+        &connection.client_socket,
+        0,
+        &thread_id
+    );
+
+    if (receiver_thread == NULL)
+    {
+        printf("[-] Failed to create receiver thread.\n");
+
+        closesocket(connection.client_socket);
+        closesocket(connection.listen_socket);
+        WSACleanup();
+        return;
+    }
+
+    // Keep displaying the menu until the user exits.
     do
     {
         system("cls");
         cli_options();
-        printf("<input> ");
-        
 
-        scanf("%d", &user_input);
-        // Validate the user's menu selection.
+        printf("<input> ");
+
+        // Read the user's menu selection.
+        if (scanf("%d", &user_input) != 1)
+        {
+            error_message();
+
+            int ch;
+            while ((ch = getchar()) != '\n' && ch != EOF);
+
+            continue;
+        }
+
+        // Consume the newline left by scanf().
+        getchar();
+
+        // Validate the menu selection.
         if (input_validater(user_input) == 1)
         {
             error_message();
@@ -281,30 +338,45 @@ void host_menu_handler(void)
             continue;
         }
 
-        // Option 1: Allow the host to send a message to the connected client.
+        // Option 1: Send a message to the client.
         if (user_input == 1)
         {
             char message[1024];
 
             printf("You: ");
-            fgets(message, sizeof(message), stdin);
 
-            // Remove the newline character added by fgets().
+            if (fgets(message, sizeof(message), stdin) == NULL)
+            {
+                error_message();
+                continue;
+            }
+
+            // Remove the trailing newline.
             message[strcspn(message, "\n")] = '\0';
 
-            // Send the message through the connected client socket.
-            send_file(connection.client_socket, message);
+            // Send the message through the connected socket.
+            if (send_message(connection.client_socket, message) != 0)
+            {
+                error_message();
+            }
         }
         else if (user_input != 2)
         {
             error_message();
+            getchar();
         }
 
     } while (user_input != 2);
 
-    // Close the connection and release networking resources when the user exits.
+    // Stop the receiver thread before cleaning up.
     printf("[+] Closing connection...\n");
 
+    shutdown(connection.client_socket, SD_BOTH);
+
+    WaitForSingleObject(receiver_thread, INFINITE);
+    CloseHandle(receiver_thread);
+
+    // Release networking resources.
     closesocket(connection.client_socket);
     closesocket(connection.listen_socket);
 

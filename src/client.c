@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <process.h>
+#include <windows.h>
 
 #include "client.h"
 #include "transfer.h"   
@@ -17,6 +19,7 @@ int connect_to_host(SOCKET client,  char *serverIP);
 SOCKET client_side_handler(void);
 void client_side_menu();
 char *get_host_ip(void);
+unsigned int __stdcall client_receive_handler(void *arg);
 
 
 /// @brief Initializes Winsock so the client can use network functions.
@@ -167,58 +170,130 @@ SOCKET client_side_handler(void)
 }
 
 
+unsigned int __stdcall client_receive_handler(void *arg)
+{
+    SOCKET server_socket = *(SOCKET *)arg;
+    char buffer[1024];
+
+    while (1)
+    {
+        int result = receive_message(
+            server_socket,
+            buffer,
+            sizeof(buffer)
+        );
+
+        // Stop receiving if an error or disconnection occurs.
+        if (result != 0)
+        {
+            break;
+        }
+    }
+
+    return 0;
+}
+
 
 /// @brief Handles the client-side menu and user interactions.
+
 void client_side_menu(void)
 {
     int user_input = 0;
 
-    // Initialize the client and establish a connection with the host.
+    // Initialize the client and establish a connection.
     SOCKET client = client_side_handler();
 
-    // Check if the client socket creation or connection failed.
+    // Check whether the connection failed.
     if (client == INVALID_SOCKET)
     {
         return;
     }
 
-    // Check if the user chose to exit.
-    if (client == 101)
+    // Start the receiver thread.
+    unsigned int thread_id;
+
+    HANDLE receiver_thread = (HANDLE)_beginthreadex(
+        NULL,
+        0,
+        client_receive_handler,
+        &client,
+        0,
+        &thread_id
+    );
+
+    if (receiver_thread == NULL)
     {
+        printf("[-] Failed to create receiver thread.\n");
+        closesocket(client);
+        WSACleanup();
         return;
     }
 
-    // Clear the terminal and display the client menu.
+    // Display the client menu.
     system("cls");
     cli_options();
 
-    // Keep displaying the menu until the user chooses to go back.
+    // Keep displaying the menu until the user exits.
     while (user_input != 3)
     {
-        // Get the user's menu choice.
         printf("<Input> ");
-        scanf("%d", &user_input);
 
+        // Read the user's menu selection.
+        if (scanf("%d", &user_input) != 1)
+        {
+            error_message();
+
+            int ch;
+            while ((ch = getchar()) != '\n' && ch != EOF);
+
+            continue;
+        }
+
+        // Consume the newline left by scanf().
+        getchar();
+
+        // Option 1: Send a message to the host.
         if (user_input == 1)
         {
             char message[1024];
 
-            // Clear the leftover newline from scanf.
-            getchar();
-
-            // Take the message from the user.
             printf("You: ");
-            fgets(message, sizeof(message), stdin);
 
-            // Send the message to the connected host.
-            send_file(client, message);
+            if (fgets(message, sizeof(message), stdin) == NULL)
+            {
+                error_message();
+                continue;
+            }
+
+            // Remove the trailing newline.
+            message[strcspn(message, "\n")] = '\0';
+
+            // Send the message to the host.
+            if (send_message(client, message) != 0)
+            {
+                error_message();
+            }
         }
         else if (user_input == 2)
         {
-            break; // Exit the menu and return to the Main Menu.
+            // Return to the main menu.
+            break;
+        }
+        else if (user_input != 3)
+        {
+            error_message();
         }
     }
 
-    closesocket(client);         // Close the client socket.
-    WSACleanup();                // Clean up Winsock resources.
+    // Close the connection and stop the receiver thread.
+    printf("[+] Closing connection...\n");
+
+    shutdown(client, SD_BOTH);
+
+    WaitForSingleObject(receiver_thread, INFINITE);
+    CloseHandle(receiver_thread);
+
+    closesocket(client);
+    WSACleanup();
 }
+
