@@ -16,13 +16,22 @@ int send_message(SOCKET connection_session, const char *input_buffer)
 {
     int total_sent = 0;
     int message_length = (int)strlen(input_buffer);
+    int total_length = message_length + 1;
+    char newline = '\n';
 
-    while (total_sent < message_length)
+    while (total_sent < total_length)
     {
+        const char *data = total_sent < message_length
+            ? input_buffer + total_sent
+            : &newline;
+        int remaining = total_sent < message_length
+            ? message_length - total_sent
+            : 1;
+
         int bytes_sent = send(
             connection_session,
-            input_buffer + total_sent,
-            message_length - total_sent,
+            data,
+            remaining,
             0
         );
 

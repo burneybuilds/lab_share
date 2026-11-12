@@ -308,12 +308,14 @@ void host_menu_handler(void)
         return;
     }
 
-    // Keep displaying the menu until the user exits.
+    // Display the menu once and keep it visible while the user interacts
+    // with the connected client.
+    system("cls");
+    cli_options();
+
+    // Keep accepting menu selections until the user exits.
     do
     {
-        system("cls");
-        cli_options();
-
         printf("<input> ");
 
         // Read the user's menu selection.
