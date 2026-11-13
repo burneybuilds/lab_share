@@ -1,16 +1,14 @@
 #include <stdio.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <commdlg.h>
-
-#include "host.h"
 
 // Prototypes.
 
 int receive_message(SOCKET connection_session, char *buffer, int buffer_size);
 int send_message(SOCKET connection_session, const char *input_buffer);
-
+int send_file(void);
 
 int send_message(SOCKET connection_session, const char *input_buffer)
 {
@@ -97,7 +95,7 @@ int receive_message(SOCKET connection_session, char *buffer, int buffer_size)
         if (ch == '\n')
         {
             buffer[total_received] = '\0';
-            printf("Client: %s\n", buffer);
+            printf("\nClient: %s\n", buffer);
             return 0;
         }
 
@@ -109,4 +107,8 @@ int receive_message(SOCKET connection_session, char *buffer, int buffer_size)
 
     printf("[-] Message exceeds buffer capacity.\n");
     return 3;
+}
+
+int send_file(){
+    return 0;
 }

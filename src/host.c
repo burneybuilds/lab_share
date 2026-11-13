@@ -316,57 +316,39 @@ void host_menu_handler(void)
     // Keep accepting menu selections until the user exits.
     do
     {
-        printf("<input> ");
+        printf("You:  ");
 
-        // Read the user's menu selection.
-        if (scanf("%d", &user_input) != 1)
+        char message[1024];
+
+
+        if (fgets(message, sizeof(message), stdin) == NULL)
         {
             error_message();
-
-            int ch;
-            while ((ch = getchar()) != '\n' && ch != EOF);
-
+            printf("[-] Issue.\n");
             continue;
         }
 
-        // Consume the newline left by scanf().
-        getchar();
+        // Remove the trailing newline.
+        message[strcspn(message, "\n")] = '\0';
 
-        // Validate the menu selection.
-        if (input_validater(user_input) == 1)
+        if (message == "1")
+        {
+            printf("Hii\n");
+            continue;
+        }
+        // Send the message through the connected socket.
+        if (send_message(connection.client_socket, message) != 0)
         {
             error_message();
-            getchar();
-            continue;
         }
 
         // Option 1: Send a message to the client.
-        if (user_input == 1)
-        {
-            char message[1024];
 
-            printf("You: ");
-
-            if (fgets(message, sizeof(message), stdin) == NULL)
-            {
-                error_message();
-                continue;
-            }
-
-            // Remove the trailing newline.
-            message[strcspn(message, "\n")] = '\0';
-
-            // Send the message through the connected socket.
-            if (send_message(connection.client_socket, message) != 0)
-            {
-                error_message();
-            }
-        }
-        else if (user_input != 2)
-        {
-            error_message();
-            getchar();
-        }
+        // else if (user_input != 2)
+        // {
+        //     error_message();
+        //     getchar();
+        // }
 
     } while (user_input != 2);
 

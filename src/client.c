@@ -6,7 +6,7 @@
 #include <windows.h>
 
 #include "client.h"
-#include "transfer.h"   
+#include "transfer.h"
 #include "utils.h"
 #include "validate.h"
 
@@ -129,7 +129,7 @@ int connect_to_host(SOCKET client, char *serverIP)
 }
 
 /// @brief Initializes Winsock, creates a client socket, and connects to the host.
-/// @param NULL 
+/// @param NULL
 /// @return client -> SOCKET || INVALID_SOCKET.
 SOCKET client_side_handler(void)
 {
@@ -155,7 +155,7 @@ SOCKET client_side_handler(void)
     {
         closesocket(client);
         WSACleanup();
-        return INVALID_SOCKET;  
+        return INVALID_SOCKET;
     }
 
      // Let's see if the host picks up the phone because your crush isn't picking up the call...
@@ -165,8 +165,8 @@ SOCKET client_side_handler(void)
         closesocket(client);
         WSACleanup();
         return INVALID_SOCKET;
-    }   
-    return client; 
+    }
+    return client;
 }
 
 
@@ -236,52 +236,33 @@ void client_side_menu(void)
     // Keep displaying the menu until the user exits.
     while (user_input != 3)
     {
-        printf("<Input> ");
+        char message[1024];
 
-        // Read the user's menu selection.
-        if (scanf("%d", &user_input) != 1)
+        printf("You: ");
+
+        if (fgets(message, sizeof(message), stdin) == NULL)
         {
             error_message();
-
-            int ch;
-            while ((ch = getchar()) != '\n' && ch != EOF);
-
             continue;
         }
 
-        // Consume the newline left by scanf().
-        getchar();
+        // Remove the trailing newline.
+        message[strcspn(message, "\n")] = '\0';
+
+        // Send the message to the host.
+        if (send_message(client, message) != 0)
+        {
+            error_message();
+        }
 
         // Option 1: Send a message to the host.
         if (user_input == 1)
         {
-            char message[1024];
-
-            printf("You: ");
-
-            if (fgets(message, sizeof(message), stdin) == NULL)
-            {
-                error_message();
-                continue;
-            }
-
-            // Remove the trailing newline.
-            message[strcspn(message, "\n")] = '\0';
-
-            // Send the message to the host.
-            if (send_message(client, message) != 0)
-            {
-                error_message();
-            }
         }
         else if (user_input == 2)
         {
             // Return to the main menu.
             break;
-        }
-        else if (user_input != 3)
-        {
-            error_message();
         }
     }
 
@@ -296,4 +277,3 @@ void client_side_menu(void)
     closesocket(client);
     WSACleanup();
 }
-

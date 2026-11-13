@@ -1,0 +1,8 @@
+CompileFlags:
+  Compiler: C:/msys64/ucrt64/bin/gcc.exe
+  Add:
+    - -target
+    - x86_64-w64-windows-gnu
+    - -std=c11
+    - -I
+    - include
