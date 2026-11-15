@@ -8,39 +8,52 @@ void main_menu(void);
 void error_message(void);
 char *get_local_ip(void);
 int code_generator(void);
-char *file_selecter(int user_input);
+char *file_selector(int user_input);
 
-// Prints the File Selection Menu.
+// Displays the file selection menu.
 void cli_options(void){
     printf("==================Lab Share=====================\n");
-    printf("1. Send File. \n");
-    printf("2. Back. \n");
+    printf("1. Send File.\n");
+    printf("2. Back.\n");
     printf("================================================\n");
 }
 
+// Displays the connection waiting screen.
 void waiting_for_connection(void){
     printf("==================Lab Share=====================\n");
-    printf("Waiting for Connection\n");
-    printf("Press 1 to Go back.\n");
+    printf("Waiting for Connection...\n");
+    printf("Press 1 to go back.\n");
     printf("================================================\n");
 }
 
+// Displays the main application menu.
 void main_menu(void){
     printf("===================Lab Share====================\n");
     printf("1. Host a Session\n");
     printf("2. Connect to a Session\n");
-    printf("3. Settings.\n");
-    printf("4. Exit.\n");
+    printf("3. Settings\n");
+    printf("4. Exit\n");
     printf("=================================================\n");
 }
 
+// Displays an error message for invalid user input.
 void error_message(void){
     printf("===================Error=========================\n");
-    printf("Invalid input! Please enter a number.\n");
-    printf("Press Enter to Continue...\n");
+    printf("Invalid input! Please enter a valid number.\n");
+    printf("Press Enter to continue...\n");
     printf("=================================================\n");
 }
 
+// Generate a 4 Digits Random Code.
+int code_generator(void)
+{
+    int number = 1000 + rand() % 9000;
+    return number;
+}
+
+
+// Retrieves the local IPv4 address associated with the host machine.
+// Returns the IP address as a string, or NULL if retrieval fails.
 char *get_local_ip(void)
 {
     char hostname[256];
@@ -63,6 +76,7 @@ char *get_local_ip(void)
 
     static char ip[INET_ADDRSTRLEN];
 
+    // Iterate through the available addresses and skip loopback addresses.
     for (struct addrinfo *ptr = result; ptr != NULL; ptr = ptr->ai_next)
     {
         struct sockaddr_in *address = (struct sockaddr_in *)ptr->ai_addr;
@@ -81,21 +95,14 @@ char *get_local_ip(void)
 }
 
 
-// Generate a 4 Digits Random Code.
-int code_generator(void)
-{
-    int number = 1000 + rand() % 9000;
-    return number;
-}
-
 
 /**
- * @brief Opens the Windows file dialog to select a file.
- * @param user_input Opens the dialog when the value is 1.
- * @return Dynamically allocated file path on success, otherwise NULL.
- * @note The caller must free the returned pointer.
+ * @brief Opens a Windows file dialog to select a file.
+ * @param user_input Opens the dialog if set to 1.
+ * @return Allocated file path on success, otherwise NULL.
+ * @note The caller is responsible for freeing the returned pointer.
  */
-char *file_selecter(int user_input)
+char *file_selector(int user_input)
 {
     // File pointers point toward files, unlike your crush. :')
     char filePath[MAX_PATH] = {0};

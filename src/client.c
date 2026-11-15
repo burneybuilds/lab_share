@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <winsock2.h>
@@ -11,20 +12,19 @@
 #include "validate.h"
 
 
-// Prototypes.
+// Function prototypes.
 int initialize_winsock_client(void);
 char *take_ip(void);
-SOCKET client_session();
-int connect_to_host(SOCKET client,  char *serverIP);
+SOCKET client_session(void);
+int connect_to_host(SOCKET client, char *serverIP);
 SOCKET client_side_handler(void);
-void client_side_menu();
+void client_side_menu(void);
 char *get_host_ip(void);
 unsigned int __stdcall client_receive_handler(void *arg);
 
 
-/// @brief Initializes Winsock so the client can use network functions.
-/// @param None
-/// @return 0 if Winsock is initialized successfully, 1 if initialization fails.
+// Initializes Winsock for client-side network communication.
+// Returns 0 on success, otherwise 1.
 int initialize_winsock_client(void)
 {
     WSADATA wsaData;
@@ -32,7 +32,7 @@ int initialize_winsock_client(void)
     // Start Winsock version 2.2.
     int wsaResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    // Check if Winsock started successfully.
+    // Check whether Winsock initialized successfully.
     if (wsaResult != 0) {
         return 1;
     }
@@ -41,30 +41,29 @@ int initialize_winsock_client(void)
     return 0;
 }
 
-/// @brief Creates a TCP socket for the client to connect to a server.
-/// @param None
-/// @return The created socket if successful, INVALID_SOCKET if creation fails.
+
+// Creates a TCP socket for the client to connect to the host.
+// Returns the created socket on success, otherwise INVALID_SOCKET.
 SOCKET client_session(void)
 {
     // Create a TCP socket using IPv4.
     // AF_INET      -> Uses IPv4 addressing.
     // SOCK_STREAM  -> Uses TCP (reliable, connection-based communication).
     // IPPROTO_TCP  -> Specifies the TCP protocol.
-    SOCKET TcpConnectionSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // Returns -> INVALID_SOCKET -> IF Failed..
+    SOCKET tcp_connection_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    // Check if the socket was created successfully.
-    if (TcpConnectionSocket == INVALID_SOCKET) {
+    // Check whether the socket was created successfully.
+    if (tcp_connection_socket == INVALID_SOCKET) {
         return INVALID_SOCKET;
     }
 
     // Return the socket so it can be used for connection.
-    return TcpConnectionSocket;
+    return tcp_connection_socket;
 }
 
 
-/// @brief Takes the host's IPv4 address as input from the user.
-/// @param None
-/// @return A pointer to the first character of the stored IP address.
+// Takes the host's IPv4 address as input from the user.
+// Returns a pointer to the stored IP address.
 char *take_ip(void)
 {
     static char arr[16];
@@ -73,13 +72,12 @@ char *take_ip(void)
 
     scanf("%15s", arr);
 
-    return arr; // This is Returning a pointer to the first character of the array.
+    return arr; // Returns a pointer to the stored IP address.
 }
 
 
-/// @brief Takes a valid IPv4 address from the user.
-/// @param None
-/// @return 0 when a valid IP is entered, 1 when the user chooses to exit.
+// Retrieves a valid IPv4 address from the user.
+// Returns the IP address on success, or NULL if the user chooses to exit.
 char *get_host_ip(void)
 {
     while (true)
@@ -105,36 +103,44 @@ char *get_host_ip(void)
     }
 }
 
-/// @brief Establishes a TCP connection with the specified host.
-/// @param client The client's socket.
-/// @param serverIP The IPv4 address of the host.
-/// @return 0 on success, SOCKET_ERROR on connection failure.
+
+// Establishes a TCP connection with the specified host.
+// @param client The client's socket.
+// @param serverIP The host's IPv4 address.
+// Returns 0 on success, SOCKET_ERROR on failure.
 int connect_to_host(SOCKET client, char *serverIP)
 {
-    struct sockaddr_in serverAddress = {0};
+    struct sockaddr_in server_address = {0};
 
-    serverAddress.sin_family = AF_INET;   // Set the address family to IPv4.
-    serverAddress.sin_port = htons(8080); // Set the host's port number to 8080.
-    inet_pton(AF_INET, serverIP, &serverAddress.sin_addr); // Convert the IP address from string format to binary format.
+    server_address.sin_family = AF_INET;   // Set the address family to IPv4.
+    server_address.sin_port = htons(8080); // Set the host's port number to 8080.
+
+    // Validates and converts the IPv4 address to binary network format.
+    inet_pton(AF_INET, serverIP, &server_address.sin_addr);
 
     // Attempt to connect to the host.
-    int connection_pool = connect(client, (SOCKADDR *)&serverAddress, sizeof(serverAddress));
+    int connection_result = connect(
+        client,
+        (SOCKADDR *)&server_address,
+        sizeof(server_address)
+    );
 
-    if (connection_pool == SOCKET_ERROR)
+    if (connection_result == SOCKET_ERROR)
     {
         return SOCKET_ERROR;
     }
 
-    return connection_pool;
+    return connection_result;
 }
 
-/// @brief Initializes Winsock, creates a client socket, and connects to the host.
-/// @param NULL
-/// @return client -> SOCKET || INVALID_SOCKET.
+
+// Initializes Winsock, creates a client socket, and connects to the host.
+// Returns the connected client socket on success, otherwise INVALID_SOCKET.
 SOCKET client_side_handler(void)
 {
     // Let's get this thing online.
     int flag = initialize_winsock_client();
+
     if (flag != 0)
     {
         printf("[-] Failed to initialize Winsock.\n");
@@ -144,11 +150,14 @@ SOCKET client_side_handler(void)
     // Time to make a socket. No socket, no talking.
     // Yeah, you're too alone, so you're now watching sockets talk to each other.
     SOCKET client = client_session();
-    if (client == INVALID_SOCKET){
+
+    if (client == INVALID_SOCKET)
+    {
         printf("[-] Failed to create client socket.\n");
         WSACleanup();
         return INVALID_SOCKET;
     }
+
     char *serverIP = get_host_ip();
 
     if (serverIP == NULL)
@@ -158,18 +167,22 @@ SOCKET client_side_handler(void)
         return INVALID_SOCKET;
     }
 
-     // Let's see if the host picks up the phone because your crush isn't picking up the call...
+    // Let's see if the host picks up the phone because your crush isn't picking up the call...
     int connection_flag = connect_to_host(client, serverIP);
+
     if (connection_flag == SOCKET_ERROR) {
         printf("[-] Failed to connect to the host.\n");
         closesocket(client);
         WSACleanup();
         return INVALID_SOCKET;
     }
+
     return client;
 }
 
 
+// Handles incoming messages from the host.
+// Stops when an error occurs or the connection is closed.
 unsigned int __stdcall client_receive_handler(void *arg)
 {
     SOCKET server_socket = *(SOCKET *)arg;
@@ -194,17 +207,17 @@ unsigned int __stdcall client_receive_handler(void *arg)
 }
 
 
-/// @brief Handles the client-side menu and user interactions.
+// Handles the client-side menu and user interactions.
 void client_side_menu(void)
 {
-    unsigned int thread_id;   // Start the receiver thread.
+    unsigned int thread_id;   // Stores the receiver thread's ID.
     char message[1024];
 
     // Initialize the client and establish a connection.
     SOCKET client = client_side_handler();
 
     // Check whether the connection failed.
-    if (client == INVALID_SOCKET){
+    if (client == INVALID_SOCKET) {
         return;
     }
 
@@ -217,14 +230,10 @@ void client_side_menu(void)
         &thread_id
     );
 
-    if (receiver_thread == NULL){
+    if (receiver_thread == NULL) {
         printf("[-] Failed to create receiver thread.\n");
         closesocket(client);
         WSACleanup();
-        return;
-    }
-
-    if(receiver_thread == 1){
         return;
     }
 
@@ -233,8 +242,8 @@ void client_side_menu(void)
     cli_options();
 
     // Keep displaying the menu until the user exits.
-    while (1){
-
+    while (1)
+    {
         printf("You: ");
 
         if (fgets(message, sizeof(message), stdin) == NULL)
@@ -246,12 +255,12 @@ void client_side_menu(void)
         // Remove the trailing newline.
         message[strcspn(message, "\n")] = '\0';
 
-        if(strcmp(message, "1") == 0){
+        if (strcmp(message, "1") == 0) {
             break;
         }
 
         // Send the message to the host.
-        if (send_message(client, message) != 0){
+        if (send_message(client, message) != 0) {
             error_message();
         }
     }
@@ -266,4 +275,5 @@ void client_side_menu(void)
     CloseHandle(receiver_thread);
 
     WSACleanup();
+    return;
 }

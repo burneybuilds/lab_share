@@ -8,7 +8,6 @@
 
 #include "transfer.h"
 #include "utils.h"
-// #include "validate.h"
 
 typedef struct
 {
@@ -16,7 +15,6 @@ typedef struct
     SOCKET listen_socket;
 } HostConnection;
 
-// Prototypes.
 int initialize_winsock(void);
 SOCKET create_server_socket(void);
 int bind_server_socket(SOCKET ListenSocket, unsigned short port);
@@ -27,6 +25,7 @@ HostConnection server_side_handler(void);
 unsigned int __stdcall receive_handler(void *arg);
 void host_menu_handler(void);
 
+
 // Start the Winsock library so the program can use Windows socket functions.
 // Return 1 if Winsock fails to initialize, otherwise return 0.
 int initialize_winsock(void)
@@ -35,7 +34,7 @@ int initialize_winsock(void)
 
     int wsaResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    // Check if the output of the WSA startup is not 0 .
+    // Check if the output of the WSAstartup is not 0 .
     if (wsaResult != 0)
     {
         return 1;
@@ -44,10 +43,10 @@ int initialize_winsock(void)
     return 0;
 }
 
+
 // Creates a TCP socket that the server will use to listen for incoming client connections.
 // AF_INET specifies IPv4, SOCK_STREAM specifies a reliable connection-based socket,
 // and IPPROTO_TCP specifies the TCP protocol.
-//
 // Returns the created socket if successful, otherwise returns INVALID_SOCKET.
 SOCKET create_server_socket(void)
 {
@@ -63,35 +62,26 @@ SOCKET create_server_socket(void)
     return ListenSocket;
 }
 
+
 // Binds the server socket to a specific port and all available local IPv4 interfaces.
 // This allows clients to reach the server using its IP address and port.
 int bind_server_socket(SOCKET ListenSocket, unsigned short port)
 {
-    // Stores the IPv4 address and port information required by bind().
-    struct sockaddr_in service = {0};
+    struct sockaddr_in service = {0};  // Stores the IPv4 address and port information required by bind().
 
-    // Specifies that the server will use IPv4 addresses.
-    service.sin_family = AF_INET;
-
-    // Converts the port number from host byte order to network byte order.
-    service.sin_port = htons(port);
-
-    // Allows the server to accept connections through all available local IPv4 interfaces.
-    service.sin_addr.s_addr = htonl(INADDR_ANY);
+    service.sin_family = AF_INET; // Specifies that the server will use IPv4 addresses.
+    service.sin_port = htons(port); // Converts the port number from host byte order to network byte order.
+    service.sin_addr.s_addr = htonl(INADDR_ANY); // Allows the server to accept connections through all available local IPv4 interfaces.
 
     // Binds the socket to the specified IP address and port.
     int error_flag = bind(ListenSocket, (struct sockaddr *)&service, sizeof(service));
-
-    // bind() returns SOCKET_ERROR if the binding operation fails.
-    if (error_flag == SOCKET_ERROR)
+    if (error_flag == SOCKET_ERROR) // bind() returns SOCKET_ERROR if the binding operation fails.
     {
         return 1;
     }
 
-    // Socket successfully bound to the specified port.
-    return 0;
+    return 0;  // Socket successfully bound to the specified port.
 }
-
 
 
 // Puts the server socket into listening mode so it can wait for incoming client connections.
@@ -100,17 +90,13 @@ int start_listening(SOCKET ListenSocket)
 {
     // Start listening for incoming connections on the server socket.
     int e_flag = listen(ListenSocket, SOMAXCONN);
-
-    // listen() returns SOCKET_ERROR if the operation fails.
-    if (e_flag == SOCKET_ERROR)
+    if (e_flag == SOCKET_ERROR) // listen() returns SOCKET_ERROR if the operation fails.
     {
         return 1;
     }
 
-    // Socket successfully entered listening mode.
-    return 0;
+    return 0; // Socket successfully entered listening mode.
 }
-
 
 
 // Accepts an incoming connection request from a client.
@@ -123,15 +109,12 @@ SOCKET accept_client(SOCKET ListenSocket)
     // Wait for an incoming client connection and accept it.
     // NULL arguments mean we don't need to retrieve the client's IP address or port.
     ClientSocket = accept(ListenSocket, NULL, NULL);
-
-    // Check whether the connection was accepted successfully.
-    if (ClientSocket == INVALID_SOCKET)
+    if (ClientSocket == INVALID_SOCKET) // Check whether the connection was accepted successfully.
     {
         return INVALID_SOCKET;
     }
 
-    // Return the new socket used to communicate with the client.
-    return ClientSocket;
+    return ClientSocket; // Return the new socket used to communicate with the client.
 }
 
 
@@ -151,7 +134,6 @@ HostConnection server_side_handler(void)
     // Initialize Winsock so the program can use Windows networking functions.
     // Returns 1 if initialization fails, otherwise returns 0.
     int wsa_flag = initialize_winsock();
-
     if (wsa_flag != 0)
     {
         printf("[-] Winsock initialization failed.\n");
@@ -207,7 +189,7 @@ HostConnection server_side_handler(void)
     }
 
     // Notify the user that the server is ready and waiting for a client.
-    printf("[+] Host Ready..\n[/]Waiting for a connection\n");
+    printf("[+]Host Ready....\n[/]Waiting for a connection\n");
 
     // Wait for an incoming client connection.
     // This call blocks until a client connects or an error occurs.
@@ -223,7 +205,7 @@ HostConnection server_side_handler(void)
         return connection;
     }
 
-    printf("[+] Connection Establed.\n");
+    printf("[+] Connection Established.\n");
 
     // A client has successfully connected to the server.
     // Return both sockets to the caller.
@@ -254,11 +236,11 @@ unsigned int __stdcall receive_handler(void *arg)
 // Establishes a connection with a client and allows the host to send messages.
 void host_menu_handler(void)
 {
-    char message[1024];               // Stores the user's menu selection.
+    char message[1024] = "";               // Stores the user's menu selection.
     unsigned int thread_id;           // Start the receiver thread.
     int room_code = code_generator(); // Generates a unique room code.
 
-    waiting_for_connection(); // Displays the waiting for display screen.
+    waiting_for_connection(); // waiting screen.
 
     printf("Room Code: %d\n", room_code);
 
@@ -303,7 +285,7 @@ void host_menu_handler(void)
         if (fgets(message, sizeof(message), stdin) == NULL)
         {
             error_message();
-            printf("[-] An Error occered.\n");
+            printf("[-] An Error occurred.\n");
             continue;
         }
 
@@ -320,18 +302,18 @@ void host_menu_handler(void)
         // Send the message through the connected socket.
         if (send_message(connection.client_socket, message) != 0)
         {
-            error_message(); // This just displays the error messgae not extra rocket sc.
+            error_message(); // This just displays the error message not extra rocket sc.
         }
     }
 
     // Stop the receiver thread before cleaning up.
-    int shutdown_result = shutdown(connection.client_socket, SD_BOTH);
+    shutdown(connection.client_socket, SD_BOTH);
 
     // omg this was the bug i was fighting for such a long timeeeee......
     closesocket(connection.client_socket);
     connection.client_socket = INVALID_SOCKET;
 
-    DWORD wait_result = WaitForSingleObject(receiver_thread, INFINITE);
+    WaitForSingleObject(receiver_thread, INFINITE);
     CloseHandle(receiver_thread);
 
     // Release networking resources.

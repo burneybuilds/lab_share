@@ -5,13 +5,13 @@
 int input_validater(int user_input);
 int validate_ip_address(const char *ip);
 
+// Checks whether the menu input is valid.
+// Returns 1 if invalid, otherwise 0.
 int input_validater(int user_input)
 {
     // Check the input stream for any errors.
-    if (user_input == 0)
-    {
-        // Clear invalid input from the input buffer.
-        int ch;
+    if (user_input == 0){
+        int ch; // Clear invalid input from the input buffer.
 
         // getchar() reads a character from the input stream and returns its integer value (ASCII value on ASCII-compatible systems).
         // This loop runs until a newline or EOF is encountered, clearing the remaining input.
@@ -30,7 +30,7 @@ int validate_ip_address(const char *ip)
 {
     struct in_addr address;
 
-    // Convert the IP address from string format to binary format.
+    // Validates the IPv4 address and converts it to binary network format.
     int flag = inet_pton(AF_INET, ip, &address);
 
     // Check if the conversion failed or the IP address is invalid.
