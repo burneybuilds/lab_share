@@ -8,7 +8,7 @@
 
 #include "transfer.h"
 #include "utils.h"
-#include "validate.h"
+// #include "validate.h"
 
 typedef struct
 {
@@ -160,7 +160,6 @@ HostConnection server_side_handler(void)
 
     // Create the server socket that will wait for incoming client connections.
     connection.listen_socket = create_server_socket();
-
     if (connection.listen_socket == INVALID_SOCKET)
     {
         printf("[-] Socket creation failed.\n");
@@ -173,7 +172,6 @@ HostConnection server_side_handler(void)
     // Bind the server socket to port 8080 and all available local IPv4 interfaces.
     // This allows clients to reach the server through its local IP address.
     int bind_flag = bind_server_socket(connection.listen_socket, 8080);
-
     if (bind_flag != 0)
     {
         printf("[-] bind failed with error.\n");
@@ -186,7 +184,6 @@ HostConnection server_side_handler(void)
 
     // Put the server socket into listening mode so it can wait for client connections.
     int listen_flag = start_listening(connection.listen_socket);
-
     if (listen_flag != 0)
     {
         printf("[-] listen failed with error.\n");
@@ -200,7 +197,6 @@ HostConnection server_side_handler(void)
     // Fetch the local IPv4 address so the user can see
     // which address other devices on the network can use to connect.
     char *ip = get_local_ip();
-
     if (ip != NULL)
     {
         printf("IPv4 Address: %s\n", ip);
@@ -222,15 +218,14 @@ HostConnection server_side_handler(void)
     {
         printf("[-] accept failed with error.\n");
 
-        // Close the listening socket and release Winsock resources.
-        closesocket(connection.listen_socket);
+        closesocket(connection.listen_socket); // Close the listening socket and release Winsock resources.
         WSACleanup();
         return connection;
     }
 
-    // A client has successfully connected to the server.
     printf("[+] Connection Establed.\n");
 
+    // A client has successfully connected to the server.
     // Return both sockets to the caller.
     return connection;
 }
@@ -243,15 +238,10 @@ unsigned int __stdcall receive_handler(void *arg)
 
     while (1)
     {
-        int result = receive_message(
-            client_socket,
-            buffer,
-            sizeof(buffer)
-        );
+        int result = receive_message(client_socket, buffer, sizeof(buffer));
 
         // Stop receiving if an error or disconnection occurs.
-        if (result != 0)
-        {
+        if (result != 0){
             break;
         }
     }
@@ -264,13 +254,11 @@ unsigned int __stdcall receive_handler(void *arg)
 // Establishes a connection with a client and allows the host to send messages.
 void host_menu_handler(void)
 {
-    // Stores the user's menu selection.
-    int user_input = 0;
+    char message[1024];               // Stores the user's menu selection.
+    unsigned int thread_id;           // Start the receiver thread.
+    int room_code = code_generator(); // Generates a unique room code.
 
-    // Generates a unique room code.
-    int room_code = code_generator();
-
-    waiting_for_connection();
+    waiting_for_connection(); // Displays the waiting for display screen.
 
     printf("Room Code: %d\n", room_code);
 
@@ -285,9 +273,6 @@ void host_menu_handler(void)
         getchar();
         return;
     }
-
-    // Start the receiver thread.
-    unsigned int thread_id;
 
     HANDLE receiver_thread = (HANDLE)_beginthreadex(
         NULL,
@@ -308,60 +293,48 @@ void host_menu_handler(void)
         return;
     }
 
-    // Display the menu once and keep it visible while the user interacts
-    // with the connected client.
     system("cls");
-    cli_options();
+    cli_options(); // Display the menu once and keep it visible while the user interacts
 
     // Keep accepting menu selections until the user exits.
-    do
-    {
+    while(1){
         printf("You:  ");
-
-        char message[1024];
-
 
         if (fgets(message, sizeof(message), stdin) == NULL)
         {
             error_message();
-            printf("[-] Issue.\n");
+            printf("[-] An Error occered.\n");
             continue;
         }
 
         // Remove the trailing newline.
         message[strcspn(message, "\n")] = '\0';
 
-        if (message == "1")
+        if (strcmp(message, "1") == 0)
         {
-            printf("Hii\n");
-            continue;
+
+            // printf("Hii\n"); why hii idk why it was just there to check if thing work so.
+            break;
         }
+
         // Send the message through the connected socket.
         if (send_message(connection.client_socket, message) != 0)
         {
-            error_message();
+            error_message(); // This just displays the error messgae not extra rocket sc.
         }
-
-        // Option 1: Send a message to the client.
-
-        // else if (user_input != 2)
-        // {
-        //     error_message();
-        //     getchar();
-        // }
-
-    } while (user_input != 2);
+    }
 
     // Stop the receiver thread before cleaning up.
-    printf("[+] Closing connection...\n");
+    int shutdown_result = shutdown(connection.client_socket, SD_BOTH);
 
-    shutdown(connection.client_socket, SD_BOTH);
+    // omg this was the bug i was fighting for such a long timeeeee......
+    closesocket(connection.client_socket);
+    connection.client_socket = INVALID_SOCKET;
 
-    WaitForSingleObject(receiver_thread, INFINITE);
+    DWORD wait_result = WaitForSingleObject(receiver_thread, INFINITE);
     CloseHandle(receiver_thread);
 
     // Release networking resources.
-    closesocket(connection.client_socket);
     closesocket(connection.listen_socket);
 
     WSACleanup();

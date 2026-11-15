@@ -10,6 +10,7 @@ char *get_local_ip(void);
 int code_generator(void);
 char *file_selecter(int user_input);
 
+// Prints the File Selection Menu.
 void cli_options(void){
     printf("==================Lab Share=====================\n");
     printf("1. Send File. \n");

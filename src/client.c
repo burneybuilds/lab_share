@@ -195,22 +195,18 @@ unsigned int __stdcall client_receive_handler(void *arg)
 
 
 /// @brief Handles the client-side menu and user interactions.
-
 void client_side_menu(void)
 {
-    int user_input = 0;
+    unsigned int thread_id;   // Start the receiver thread.
+    char message[1024];
 
     // Initialize the client and establish a connection.
     SOCKET client = client_side_handler();
 
     // Check whether the connection failed.
-    if (client == INVALID_SOCKET)
-    {
+    if (client == INVALID_SOCKET){
         return;
     }
-
-    // Start the receiver thread.
-    unsigned int thread_id;
 
     HANDLE receiver_thread = (HANDLE)_beginthreadex(
         NULL,
@@ -221,11 +217,14 @@ void client_side_menu(void)
         &thread_id
     );
 
-    if (receiver_thread == NULL)
-    {
+    if (receiver_thread == NULL){
         printf("[-] Failed to create receiver thread.\n");
         closesocket(client);
         WSACleanup();
+        return;
+    }
+
+    if(receiver_thread == 1){
         return;
     }
 
@@ -234,9 +233,7 @@ void client_side_menu(void)
     cli_options();
 
     // Keep displaying the menu until the user exits.
-    while (user_input != 3)
-    {
-        char message[1024];
+    while (1){
 
         printf("You: ");
 
@@ -249,20 +246,13 @@ void client_side_menu(void)
         // Remove the trailing newline.
         message[strcspn(message, "\n")] = '\0';
 
-        // Send the message to the host.
-        if (send_message(client, message) != 0)
-        {
-            error_message();
+        if(strcmp(message, "1") == 0){
+            break;
         }
 
-        // Option 1: Send a message to the host.
-        if (user_input == 1)
-        {
-        }
-        else if (user_input == 2)
-        {
-            // Return to the main menu.
-            break;
+        // Send the message to the host.
+        if (send_message(client, message) != 0){
+            error_message();
         }
     }
 
@@ -270,10 +260,10 @@ void client_side_menu(void)
     printf("[+] Closing connection...\n");
 
     shutdown(client, SD_BOTH);
+    closesocket(client);
 
     WaitForSingleObject(receiver_thread, INFINITE);
     CloseHandle(receiver_thread);
 
-    closesocket(client);
     WSACleanup();
 }
