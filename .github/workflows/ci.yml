@@ -26,7 +26,7 @@ jobs:
 
       - name: Build application and tests
         shell: msys2 {0}
-        run: make clean all
+        run: mingw32-make clean all
 
       - name: Run all tests
         shell: msys2 {0}

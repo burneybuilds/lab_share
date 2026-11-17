@@ -25,7 +25,7 @@ pacman -S --needed mingw-w64-ucrt-x86_64-make
 
 ```bash
 gcc --version
-make --version
+mingw32-make --version
 ```
 
 If both commands display version information, you're ready to continue.
@@ -44,7 +44,7 @@ Replace `<repository-url>` with the URL of the Lab Share repository.
 From the project root directory, run:
 
 ```bash
-make
+mingw32-make
 ```
 
 This command uses the project's `makefile` to compile the source code and generate the executable.

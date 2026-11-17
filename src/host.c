@@ -224,7 +224,7 @@ unsigned int __stdcall receive_handler(void *arg)
 
         // Stop receiving if an error or disconnection occurs.
         if (result != 0){
-            break;
+            return result;
         }
     }
 
@@ -294,7 +294,6 @@ void host_menu_handler(void)
 
         if (strcmp(message, "1") == 0)
         {
-
             // printf("Hii\n"); why hii idk why it was just there to check if thing work so.
             break;
         }

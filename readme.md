@@ -44,7 +44,7 @@ Verify the tools:
 
 ```bash
 gcc --version
-make --version
+mingw32-make --version
 ```
 
 ## Build
@@ -70,8 +70,8 @@ The build produces:
 To build only one target:
 
 ```bash
-make app
-make tests
+mingw32-make app
+mingw32-make tests
 ```
 
 ## Run
@@ -104,7 +104,7 @@ download, or save a file.
 Run the Windows socket and validation tests with:
 
 ```bash
-make test
+mingw32-make test
 ```
 
 The tests cover Winsock initialization, socket creation, binding,
@@ -114,7 +114,7 @@ validation, and client socket creation.
 Remove generated build output with:
 
 ```bash
-make clean
+mingw32-make clean
 ```
 
 ## Configuration

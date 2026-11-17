@@ -6,6 +6,7 @@ void cli_options(void);
 void waiting_for_connection(void);
 void main_menu(void);
 void error_message(void);
+void disconnect_message(void);
 char *get_local_ip(void);
 int code_generator(void);
 char *file_selector(int user_input);
@@ -38,6 +39,14 @@ void main_menu(void){
 
 // Displays an error message for invalid user input.
 void error_message(void){
+    printf("===================Error=========================\n");
+    printf("Invalid input! Please enter a valid number.\n");
+    printf("Press Enter to continue...\n");
+    printf("=================================================\n");
+}
+
+// Displays an disconnect message for invalid user input.
+void disconnect_message(void){
     printf("===================Error=========================\n");
     printf("Invalid input! Please enter a valid number.\n");
     printf("Press Enter to continue...\n");

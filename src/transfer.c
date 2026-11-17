@@ -93,7 +93,7 @@ int receive_message(SOCKET connection_session, char *buffer, int buffer_size)
         if (ch == '\n')
         {
             buffer[total_received] = '\0';
-            printf("\nClient: %s\n", buffer);
+            printf("Client: %s\n", buffer);
             return 0;
         }
 
