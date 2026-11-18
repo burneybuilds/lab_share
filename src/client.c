@@ -230,12 +230,18 @@ void client_side_menu(void)
         &thread_id
     );
 
+    HANDLE handles[2];
+
+    handles[0] = receiver_thread;
+    handles[1] = GetStdHandle(STD_INPUT_HANDLE);
+
     if (receiver_thread == NULL) {
         printf("[-] Failed to create receiver thread.\n");
         closesocket(client);
         WSACleanup();
         return;
     }
+
 
     // Display the client menu.
     system("cls");
@@ -244,6 +250,20 @@ void client_side_menu(void)
     // Keep displaying the menu until the user exits.
     while (1)
     {
+        DWORD wait_result = WaitForMultipleObjects(
+                2,
+                handles,
+                FALSE,
+                INFINITE
+        );
+
+        if (wait_result == WAIT_OBJECT_0){
+            disconnect_message();
+            getchar();
+            getchar();
+            break;
+        }
+
         printf("You: ");
 
         if (fgets(message, sizeof(message), stdin) == NULL)

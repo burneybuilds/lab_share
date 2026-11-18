@@ -47,10 +47,12 @@ void error_message(void){
 
 // Displays an disconnect message for invalid user input.
 void disconnect_message(void){
-    printf("===================Error=========================\n");
-    printf("Invalid input! Please enter a valid number.\n");
-    printf("Press Enter to continue...\n");
-    printf("=================================================\n");
+    system("cls");
+    printf("================== Disconnected ==================\n");
+    printf("The peer has disconnected from the session.\n");
+    printf("Press Enter to return to the main menu...\n");
+    printf("==================================================\n");
+
 }
 
 // Generate a 4 Digits Random Code.

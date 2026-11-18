@@ -224,7 +224,7 @@ unsigned int __stdcall receive_handler(void *arg)
 
         // Stop receiving if an error or disconnection occurs.
         if (result != 0){
-            return result;
+            break;
         }
     }
 
@@ -256,6 +256,7 @@ void host_menu_handler(void)
         return;
     }
 
+
     HANDLE receiver_thread = (HANDLE)_beginthreadex(
         NULL,
         0,
@@ -264,6 +265,11 @@ void host_menu_handler(void)
         0,
         &thread_id
     );
+
+    HANDLE handles[2];
+
+    handles[0] = receiver_thread;
+    handles[1] = GetStdHandle(STD_INPUT_HANDLE);
 
     if (receiver_thread == NULL)
     {
@@ -280,6 +286,26 @@ void host_menu_handler(void)
 
     // Keep accepting menu selections until the user exits.
     while(1){
+
+        // if (WaitForSingleObject(receiver_thread, INFINITE) == WAIT_OBJECT_0){
+        //     disconnect_message();
+        //     getchar();
+        //     getchar();
+        //     break;
+        // }
+        DWORD wait_result = WaitForMultipleObjects(
+                2,
+                handles,
+                FALSE,
+                INFINITE
+        );
+
+        if (wait_result == WAIT_OBJECT_0 ){
+                disconnect_message();
+                getchar();
+                getchar();
+                break;
+        }
         printf("You:  ");
 
         if (fgets(message, sizeof(message), stdin) == NULL)
