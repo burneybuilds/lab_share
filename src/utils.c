@@ -9,7 +9,7 @@ void error_message(void);
 void disconnect_message(void);
 char *get_local_ip(void);
 int code_generator(void);
-char *file_selector(int user_input);
+char *file_selector(void);
 
 // Displays the file selection menu.
 void cli_options(void){
@@ -113,7 +113,7 @@ char *get_local_ip(void)
  * @return Allocated file path on success, otherwise NULL.
  * @note The caller is responsible for freeing the returned pointer.
  */
-char *file_selector(int user_input)
+char *file_selector(void)
 {
     // File pointers point toward files, unlike your crush. :')
     char filePath[MAX_PATH] = {0};
@@ -126,25 +126,23 @@ char *file_selector(int user_input)
     ofn.lpstrFilter = "All Files (*.*)\0*.*\0";
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
 
-    if (user_input == 1)
+
+    if (GetOpenFileNameA(&ofn))
     {
-        if (GetOpenFileNameA(&ofn))
-        {
-            char *selectedPath = malloc(strlen(filePath) + 1);
+        char *selectedPath = malloc(strlen(filePath) + 1);
 
-            if (selectedPath == NULL)
-                return NULL;
-
-            strcpy(selectedPath, filePath);
-
-            // printf("Selected file: %s\n", selectedPath);
-            return selectedPath;
-        }
-        else
-        {
-            printf("No file selected.\n");
+        if (selectedPath == NULL)
             return NULL;
-        }
+
+        strcpy(selectedPath, filePath);
+
+        // printf("Selected file: %s\n", selectedPath);
+        return selectedPath;
+    }
+    else
+    {
+        printf("No file selected.\n");
+        return NULL;
     }
 
     return NULL;

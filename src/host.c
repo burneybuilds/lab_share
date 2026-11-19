@@ -287,12 +287,6 @@ void host_menu_handler(void)
     // Keep accepting menu selections until the user exits.
     while(1){
 
-        // if (WaitForSingleObject(receiver_thread, INFINITE) == WAIT_OBJECT_0){
-        //     disconnect_message();
-        //     getchar();
-        //     getchar();
-        //     break;
-        // }
         DWORD wait_result = WaitForMultipleObjects(
                 2,
                 handles,
@@ -306,7 +300,6 @@ void host_menu_handler(void)
                 getchar();
                 break;
         }
-        printf("You:  ");
 
         if (fgets(message, sizeof(message), stdin) == NULL)
         {
@@ -315,13 +308,16 @@ void host_menu_handler(void)
             continue;
         }
 
+        printf("You:  ");
         // Remove the trailing newline.
         message[strcspn(message, "\n")] = '\0';
 
-        if (strcmp(message, "1") == 0)
+        if (strcmp(message, "2") == 0)
         {
             // printf("Hii\n"); why hii idk why it was just there to check if thing work so.
             break;
+        }
+        else if(strcmp(message, "1") == 0){
         }
 
         // Send the message through the connected socket.

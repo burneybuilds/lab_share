@@ -8,6 +8,6 @@ void error_message(void);
 void disconnect_message(void);
 char *get_local_ip(void);
 int code_generator(void);
-char *file_selector(int user_input);
+char *file_selector(void);
 
 #endif
